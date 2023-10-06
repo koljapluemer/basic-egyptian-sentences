@@ -17,6 +17,10 @@ let exercises = [];
 let streak = ref(0);
 const isRevealed = ref(false);
 
+let randomNewSentence = {};
+
+let mainSentencePracticeSet = [];
+
 // if uid is not in localStorage, create one and save
 let uid;
 if (localStorage.getItem("uid")) {
@@ -34,6 +38,7 @@ console.log("Main Sentences", data["main_sentences"]);
 
 // for every main sentence, attach exercises that match the id of children
 for (const sentence of data["main_sentences"]) {
+  sentence.isNew = true;
   sentence.exercises = [];
   for (const id of sentence.children) {
     // get exercise with same id from data["exercises"]
@@ -48,6 +53,7 @@ for (const sentence of data["main_sentences"]) {
           repetitions: 0,
           dueAt: Math.floor(new Date().getTime() / 1000),
         };
+        exercise.practiceBucket = 0
       }
     }
   }
@@ -96,6 +102,26 @@ console.log("Main Sentences after attaching exercises", data["main_sentences"]);
 //   // if it is in localStorage, set the sentencesBank to the localStorage value
 //   exercises = JSON.parse(localStorage.getItem("exercises"));
 // }
+
+function setNewTopic() {
+  // find a random new mainSentence 
+  const newSentences = data["main_sentences"].filter(sentence => sentence.isNew)
+  randomNewSentence = newSentences[Math.floor(Math.random() * newSentences.length)]
+
+  console.log("Picked Random New Sentence", randomNewSentence)
+  pickSentenceExercise()
+}
+
+function pickSentenceExercise() {
+  isRevealed.value = false;
+  // pick an exercise from the current randomNewSentence exercise children with a bucket value of < 3
+  const dueExercises = randomNewSentence.exercises.filter(exercise => exercise.practiceBucket < 3)
+  const newExercise = dueExercises[Math.floor(Math.random() * dueExercises.length)]
+  console.log("Picked New Exercise", newExercise)
+  exercise.value = newExercise
+
+}
+
 
 function getNextExercise() {
   let possibleExercises = exercises;
@@ -214,21 +240,39 @@ async function handleAnswer(rating) {
 <template>
   <main class="p-2 flex flex-col items-center">
     <div class="flex gap-2">
-      <button class="btn btn-success">Practice</button>
-      <button class="btn btn-primary">Explore New Topic</button>
+      <button class="btn btn-success btn-disabled">Practice</button>
+      <button class="btn btn-primary" @click="setNewTopic">Explore New Topic</button>
     </div>
+    <!-- {{ exercise }} -->
     <div
       class="card bg-gray-600 shadow-xl m-4 p-4 flex flex-col justify-start items-center min-w-sm max-w-screen-xl"
       v-if="exercise"
       style="min-height: 390px"
     >
-      <div id="prompt" class="text-3xl p-2">
-        {{ prompt }}
+       <div id="prompt" class=" p-2">
+        {{ exercise.prompt }}
       </div>
-      <div class="border-t mt-2 p-2 text-3xl" v-if="isRevealed">
-        {{ answer }}
+      <div  class="text-3xl p-2">
+        {{ exercise.question }}
+      </div>
+      <div class="w-full text-center bg-green-700 mt-2 p-2 text-3xl" v-if="isRevealed">
+        {{ exercise.question.replace("؟؟؟", exercise.correct_answer) }}
       </div>
       <div
+        class="card-actions gap-2 mt-6 pt-2"
+        
+      >
+      <button class="btn text-3xl"  v-if="!isRevealed" @click="isRevealed = true">
+      {{ exercise.correct_answer }}
+      </button>
+      <button class="btn text-3xl" v-if="!isRevealed"  @click="isRevealed = true">
+       {{ exercise.wrong_answer }}
+      </button>
+      <button class="btn" v-else @click="pickSentenceExercise">
+      Show Next
+      </button>
+      </div>
+      <!-- <div
         class="card-actions flex-col justify-center mt-6 pt-2"
         v-if="!isRevealed"
       >
@@ -238,15 +282,15 @@ async function handleAnswer(rating) {
         >
           Reveal
         </button>
-      </div>
-      <div class="card-actions flex justify-center gap-2 mt-6 pt-2" v-else>
+      </div> -->
+      <!-- <div class="card-actions flex justify-center gap-2 mt-6 pt-2" v-else>
         <button class="btn btn-error" @click="handleAnswer(false)">
           Wrong
         </button>
         <button class="btn btn-success" @click="handleAnswer(true)">
           Correct
         </button>
-      </div>
+      </div> -->
     </div>
   </main>
 
