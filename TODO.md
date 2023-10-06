@@ -1,0 +1,1 @@
+- find a good UI layout for the card instead using no hierarchy and random styles all over the place

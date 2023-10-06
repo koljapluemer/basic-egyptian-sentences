@@ -1,9 +1,7 @@
 <script setup>
-import sentences from "./data/sentences.json";
 import { ref, watch } from "vue";
 import { supabase } from "./lib/supabaseClient";
 
-let sentencesBank = sentences;
 let fieldUsedAsPrompt = ref("");
 let fieldUsedAsAnswer = ref("");
 let possibleAnswers = ref([]);
@@ -13,9 +11,9 @@ let givenAnswer = ref("");
 let indexOfAnswerClicked = ref(null);
 const exercise = ref(null);
 let exercisesDoneThisSession = 0;
-let exercises = [];
 let streak = ref(0);
 const isRevealed = ref(false);
+let exercises = [];
 
 let randomNewSentence = {};
 
@@ -31,35 +29,21 @@ if (localStorage.getItem("uid")) {
 }
 
 // EXERCISES IMPORTER FROM BACKEND
-import data from "./exercises.json";
-
-console.log("Exercise Bank Data", data);
-console.log("Main Sentences", data["main_sentences"]);
+import data from "./clozes.json";
 
 // for every main sentence, attach exercises that match the id of children
-for (const sentence of data["main_sentences"]) {
-  sentence.isNew = true;
-  sentence.exercises = [];
-  for (const id of sentence.children) {
-    // get exercise with same id from data["exercises"]
-    const exercise = data["exercises"].find((exercise) => exercise.id == id);
-    // if not undefined
-    if (exercise) {
-      sentence.exercises.push(exercise);
-      // if exercise does not have sr property, add it
-      if (!exercise.sr) {
-        exercise.sr = {
-          interval: 10,
-          repetitions: 0,
-          dueAt: Math.floor(new Date().getTime() / 1000),
-        };
-        exercise.practiceBucket = 0
-      }
-    }
-  }
+for (const exercise of data["exercises"]) {
+  exercise.sr = {
+    interval: 10,
+    repetitions: 0,
+    dueAt: Math.floor(new Date().getTime() / 1000),
+  };
+  exercise.practiceBucket = 0;
+  exercise.stats = [];
+  exercises.push(exercise);
 }
 
-console.log("Main Sentences after attaching exercises", data["main_sentences"]);
+console.log("Exercises after adapting", exercises);
 
 // TODO: reintroduce localstorage load
 // // see if sentencesBank is in localStorage, if so, load it,  if not, set it to the imported numbers (feel free to disable conditional for developing)
@@ -104,26 +88,31 @@ console.log("Main Sentences after attaching exercises", data["main_sentences"]);
 // }
 
 function setNewTopic() {
-  // find a random new mainSentence 
-  const newSentences = data["main_sentences"].filter(sentence => sentence.isNew)
-  randomNewSentence = newSentences[Math.floor(Math.random() * newSentences.length)]
+  // find a random new mainSentence
+  const newSentences = data["main_sentences"].filter(
+    (sentence) => sentence.isNew
+  );
+  randomNewSentence =
+    newSentences[Math.floor(Math.random() * newSentences.length)];
 
-  console.log("Picked Random New Sentence", randomNewSentence)
-  pickSentenceExercise()
+  console.log("Picked Random New Sentence", randomNewSentence);
+  pickSentenceExercise();
 }
 
 function pickSentenceExercise() {
   isRevealed.value = false;
   // pick an exercise from the current randomNewSentence exercise children with a bucket value of < 3
-  const dueExercises = randomNewSentence.exercises.filter(exercise => exercise.practiceBucket < 3)
-  const newExercise = dueExercises[Math.floor(Math.random() * dueExercises.length)]
-  console.log("Picked New Exercise", newExercise)
-  exercise.value = newExercise
-
+  const dueExercises = randomNewSentence.exercises.filter(
+    (exercise) => exercise.practiceBucket < 3
+  );
+  const newExercise =
+    dueExercises[Math.floor(Math.random() * dueExercises.length)];
+  console.log("Picked New Exercise", newExercise);
+  exercise.value = newExercise;
 }
 
-
 function getNextExercise() {
+  isRevealed.value = false;
   let possibleExercises = exercises;
 
   // new exercises are those whose stats array is empty
@@ -232,16 +221,18 @@ async function handleAnswer(rating) {
   // } catch (error) {
   //   console.error(error);
   // }
-  isRevealed.value = false;
-  getNextExercise();
 }
 </script>
 
 <template>
   <main class="p-2 flex flex-col items-center">
     <div class="flex gap-2">
-      <button class="btn btn-success btn-disabled">Practice</button>
-      <button class="btn btn-primary" @click="setNewTopic">Explore New Topic</button>
+      <button class="btn btn-success btn-disabled">
+        Practice Previous Exercises
+      </button>
+      <button class="btn btn-primary" @click="setNewTopic">
+        Learn New Sentence
+      </button>
     </div>
     <!-- {{ exercise }} -->
     <div
@@ -249,36 +240,38 @@ async function handleAnswer(rating) {
       v-if="exercise"
       style="min-height: 390px"
     >
-       <div id="prompt" class=" p-2">
+      <div id="prompt" class="p-2">
         {{ exercise.prompt }}
       </div>
-      <div  class="text-3xl p-2">
+      <div class="mt-2">
+        {{ exercise.sentence_en }}
+      </div>
+      <div class="text-3xl p-2">
         {{ exercise.question }}
       </div>
-      <div class="w-full text-center bg-green-700 mt-2 p-2 text-3xl" v-if="isRevealed">
-        {{ exercise.question.replace("؟؟؟", exercise.correct_answer) }}
+
+      <div
+        class="w-full text-center bg-green-700 mt-2 p-2 text-3xl"
+        v-if="isRevealed"
+      >
+        {{ exercise.sentence_ar }}
       </div>
       <!-- randomly shuffle order of answer buttons whenever new exercise is picked, using flex reverse -->
       <div
         class="card-actions gap-2 mt-6 pt-2"
-        v-if="!isRevealed" 
+        v-if="!isRevealed"
         :class="Math.random() > 0.5 ? 'flex-row-reverse' : 'flex-row'"
         :key="exercise"
       >
-      <button class="btn text-3xl"  @click="isRevealed = true">
-      {{ exercise.correct_answer }}
-      </button>
-      <button class="btn text-3xl" @click="isRevealed = true">
-       {{ exercise.wrong_answer }}
-      </button>
+        <button class="btn text-3xl" @click="isRevealed = true; handleAnswer(true)">
+          {{ exercise.correct_answer }}
+        </button>
+        <button class="btn text-3xl" @click="isRevealed = true; handleAnswer(false)">
+          {{ exercise.wrong_answer }}
+        </button>
       </div>
-       <div
-        class="card-actions gap-2 mt-6 pt-2"
-        v-else
-      >
-      <button class="btn"  @click="pickSentenceExercise">
-      Show Next
-      </button>
+      <div class="card-actions gap-2 mt-6 pt-2" v-else>
+        <button class="btn" @click="getNextExercise">Show Next</button>
       </div>
       <!-- <div
         class="card-actions flex-col justify-center mt-6 pt-2"
