@@ -26,6 +26,35 @@ if (localStorage.getItem("uid")) {
   localStorage.setItem("uid", uid);
 }
 
+// EXERCISES IMPORTER FROM BACKEND
+import data from "./exercises.json";
+
+console.log("Exercise Bank Data", data);
+console.log("Main Sentences", data["main_sentences"]);
+
+// for every main sentence, attach exercises that match the id of children
+for (const sentence of data["main_sentences"]) {
+  sentence.exercises = [];
+  for (const id of sentence.children) {
+    // get exercise with same id from data["exercises"]
+    const exercise = data["exercises"].find((exercise) => exercise.id == id);
+    // if not undefined
+    if (exercise) {
+      sentence.exercises.push(exercise);
+      // if exercise does not have sr property, add it
+      if (!exercise.sr) {
+        exercise.sr = {
+          interval: 10,
+          repetitions: 0,
+          dueAt: Math.floor(new Date().getTime() / 1000),
+        };
+      }
+    }
+  }
+}
+
+console.log("Main Sentences after attaching exercises", data["main_sentences"]);
+
 // TODO: reintroduce localstorage load
 // // see if sentencesBank is in localStorage, if so, load it,  if not, set it to the imported numbers (feel free to disable conditional for developing)
 // if (localStorage.getItem("sentencesBank")) {
@@ -34,32 +63,32 @@ if (localStorage.getItem("uid")) {
 // }
 
 // make every sentence two exercises: for one, from Arabic to English, for the other, from English to Arabic
-for (const sentence of sentencesBank) {
-  const exerciseArabicToEnglish = {
-    prompt: `${sentence.scr} \n (${sentence.trans})`,
-    answer: sentence.en,
-    sr: {
-      interval: 10,
-      repetitions: 0,
-      dueAt: Math.floor(new Date().getTime() / 1000),
-    },
-    stats: [],
-    parent: sentence,
-  };
-  const exerciseEnglishToArabic = {
-    prompt: sentence.en,
-    answer: `${sentence.scr} \n (${sentence.trans})`,
-    sr: {
-      interval: 10,
-      repetitions: 0,
-      dueAt: Math.floor(new Date().getTime() / 1000),
-    },
-    stats: [],
-    parent: sentence,
-  };
-  exercises.push(exerciseArabicToEnglish);
-  exercises.push(exerciseEnglishToArabic);
-}
+// for (const sentence of sentencesBank) {
+//   const exerciseArabicToEnglish = {
+//     prompt: `${sentence.scr} \n (${sentence.trans})`,
+//     answer: sentence.en,
+//     sr: {
+//       interval: 10,
+//       repetitions: 0,
+//       dueAt: Math.floor(new Date().getTime() / 1000),
+//     },
+//     stats: [],
+//     parent: sentence,
+//   };
+//   const exerciseEnglishToArabic = {
+//     prompt: sentence.en,
+//     answer: `${sentence.scr} \n (${sentence.trans})`,
+//     sr: {
+//       interval: 10,
+//       repetitions: 0,
+//       dueAt: Math.floor(new Date().getTime() / 1000),
+//     },
+//     stats: [],
+//     parent: sentence,
+//   };
+//   exercises.push(exerciseArabicToEnglish);
+//   exercises.push(exerciseEnglishToArabic);
+// }
 
 // TODO: reintroduce the localstorage load
 // // same for exercises
@@ -79,11 +108,11 @@ function getNextExercise() {
   const oldDueExercises = possibleExercises.filter(
     (exercise) =>
       exercise.stats.length > 0 &&
-      exercise.sr.dueAt <= Math.floor(new Date().getTime() / 1000) 
+      exercise.sr.dueAt <= Math.floor(new Date().getTime() / 1000)
   );
   // in case there are no exercises due, make a popup and return
   if (newDueExercises.length == 0 && oldDueExercises.length == 0) {
-    alert("You have nothing left to do right now! Come back later!");
+    // alert("You have nothing left to do right now! Come back later!");
     return;
   }
   // pick an old exercise with 80% chance. But:
@@ -124,8 +153,6 @@ function userSawExerciseBefore() {
 }
 
 async function handleAnswer(rating) {
-
-
   exercisesDoneThisSession++;
 
   // if answer correct, double interval, if incorrect, half interval (minimum 10)
@@ -146,13 +173,11 @@ async function handleAnswer(rating) {
         16 * 60 * 60
       );
     }
-
   } else {
     streak.value = 0;
 
     exercise.value.sr.repetitions = 0;
     // divide level by 2 and round down
-
   }
 
   // set dueAt to now + interval
@@ -184,33 +209,16 @@ async function handleAnswer(rating) {
   isRevealed.value = false;
   getNextExercise();
 }
-
-function convertNumberToArabicScript(number) {
-  const arabicNumbers = {
-    0: "٠",
-    1: "١",
-    2: "٢",
-    3: "٣",
-    4: "٤",
-    5: "٥",
-    6: "٦",
-    7: "٧",
-    8: "٨",
-    9: "٩",
-  };
-  const numberAsString = number.toString();
-  let arabicNumber = "";
-  for (let i = 0; i < numberAsString.length; i++) {
-    arabicNumber += arabicNumbers[numberAsString[i]];
-  }
-  return arabicNumber;
-}
 </script>
 
 <template>
   <main class="p-2 flex flex-col items-center">
+    <div class="flex gap-2">
+      <button class="btn btn-success">Practice</button>
+      <button class="btn btn-primary">Explore New Topic</button>
+    </div>
     <div
-      class="card bg-gray-600 shadow-xl m-4 p-4 flex flex-col justify-start items-center w-3/4 max-w-screen-xl"
+      class="card bg-gray-600 shadow-xl m-4 p-4 flex flex-col justify-start items-center min-w-sm max-w-screen-xl"
       v-if="exercise"
       style="min-height: 390px"
     >
@@ -221,24 +229,21 @@ function convertNumberToArabicScript(number) {
         {{ answer }}
       </div>
       <div
-        class="card-actions flex-col justify-center  mt-6 pt-2"
+        class="card-actions flex-col justify-center mt-6 pt-2"
         v-if="!isRevealed"
       >
-        <button class="btn btn-primary mt-4 self-end" @click="isRevealed = true">
+        <button
+          class="btn btn-primary mt-4 self-end"
+          @click="isRevealed = true"
+        >
           Reveal
         </button>
       </div>
       <div class="card-actions flex justify-center gap-2 mt-6 pt-2" v-else>
-        <button
-          class="btn btn-error"
-          @click="handleAnswer(false)"
-        >
+        <button class="btn btn-error" @click="handleAnswer(false)">
           Wrong
         </button>
-        <button
-          class="btn btn-success"
-          @click="handleAnswer(true)"
-        >
+        <button class="btn btn-success" @click="handleAnswer(true)">
           Correct
         </button>
       </div>
