@@ -258,17 +258,25 @@ async function handleAnswer(rating) {
       <div class="w-full text-center bg-green-700 mt-2 p-2 text-3xl" v-if="isRevealed">
         {{ exercise.question.replace("؟؟؟", exercise.correct_answer) }}
       </div>
+      <!-- randomly shuffle order of answer buttons whenever new exercise is picked, using flex reverse -->
       <div
         class="card-actions gap-2 mt-6 pt-2"
-        
+        v-if="!isRevealed" 
+        :class="Math.random() > 0.5 ? 'flex-row-reverse' : 'flex-row'"
+        :key="exercise"
       >
-      <button class="btn text-3xl"  v-if="!isRevealed" @click="isRevealed = true">
+      <button class="btn text-3xl"  @click="isRevealed = true">
       {{ exercise.correct_answer }}
       </button>
-      <button class="btn text-3xl" v-if="!isRevealed"  @click="isRevealed = true">
+      <button class="btn text-3xl" @click="isRevealed = true">
        {{ exercise.wrong_answer }}
       </button>
-      <button class="btn" v-else @click="pickSentenceExercise">
+      </div>
+       <div
+        class="card-actions gap-2 mt-6 pt-2"
+        v-else
+      >
+      <button class="btn"  @click="pickSentenceExercise">
       Show Next
       </button>
       </div>
