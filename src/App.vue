@@ -38,13 +38,11 @@ for (const exercise of data["exercises"]) {
 
 console.log("Exercises after adapting", exercises);
 
-// TODO: reintroduce the localStorage load
-// but, implement: new exercises should be included, and deleted should be deleted
-// // same for exercises
-// if (localStorage.getItem("exercises")) {
-//   // if it is in localStorage, set the sentencesBank to the localStorage value
-//   exercises = JSON.parse(localStorage.getItem("exercises"));
-// }
+// TODObut, implement: new exercises should be included, and deleted should be deleted
+if (localStorage.getItem("exercises")) {
+  // if it is in localStorage, set the sentencesBank to the localStorage value
+  exercises = JSON.parse(localStorage.getItem("exercises"));
+}
 
 function setGameMode(mode) {
   gameMode.value = mode;
