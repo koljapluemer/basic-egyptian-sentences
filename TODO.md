@@ -1,8 +1,12 @@
-## Open 
+## Should 
 
 - find a kind of win celebration when finishing a sentence chapter
 - interrupt queue practice if it's longer than n exercises
 - give player some incentive to keep going
+
+## Could 
+
+- give a more fine-grained access control to supabase
 
 ## Done
 - find a good UI layout for the card instead using no hierarchy and random styles all over the place

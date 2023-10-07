@@ -1,0 +1,1 @@
+/home/b/MEGA/Obsidian/Main/Projects/Basic Arabic Sentences.md

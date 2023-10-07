@@ -36,8 +36,6 @@ for (const exercise of data["exercises"]) {
   exercises.push(exercise);
 }
 
-console.log("Exercises after adapting", exercises);
-
 // TODObut, implement: new exercises should be included, and deleted should be deleted
 if (localStorage.getItem("exercises")) {
   // if it is in localStorage, set the sentencesBank to the localStorage value
@@ -54,16 +52,11 @@ function setGameMode(mode) {
       (exercise) => exercise.stats.length == 0
     )[Math.floor(Math.random() * exercises.length)];
     currentlyPracticedSentence.value = newExercise.sentence_en;
-    console.log(
-      "Set game mode to 'new' with sentence:",
-      currentlyPracticedSentence.value
-    );
     getNextExercise();
   }
 }
 
 function getNextExercise() {
-  console.log("Getting next exercise, gameMode is", gameMode.value);
   isRevealed.value = false;
 
   if (gameMode.value == "practice") {
@@ -88,7 +81,6 @@ function getNextExercise() {
     ];
     exercise.value = newExercise;
   } else if (gameMode.value == "new") {
-    console.log("Picking next exercise, gameMode is 'new'");
     // find an exercise with the currently practiced sentence with a practiceBucket value of less than 3
     // also make sure its not the same twice in a row (except if there is only one exercise left)
     let possibleExercises = exercises.filter(
@@ -103,7 +95,6 @@ function getNextExercise() {
       );
     }
 
-    console.log("possibleExercises", possibleExercises);
     // if there are no exercises left, reset gameMode
     if (possibleExercises.length == 0) {
       gameMode.value = "undetermined";
@@ -186,21 +177,25 @@ async function handleAnswer(rating) {
     gameMode: gameMode.value,
     guessWasCorrect: rating,
     timestamp: Math.floor(new Date().getTime() / 1000),
+    exercise: exercise.question,
+    answer_options: [exercise.correct_answer, exercise.wrong_answer],
   };
   exercise.value.stats.push(statsObj);
   // save the sentencesBank and exercises to localStorage
   localStorage.setItem("exercises", JSON.stringify(exercises));
-  // TODO: make its own supabase
-  // try {
-  //   const { data, error } = await supabase.from("learning_data").insert([
-  //     {
-  //       user_uid: uid,
-  //       learning_result: JSON.stringify(statsObj),
-  //     },
-  //   ]);
-  // } catch (error) {
-  //   console.error(error);
-  // }
+  try {
+    console.log("saving to supabase");
+    const { data, error } = await supabase
+      .from("learning_data_cloze_sentences")
+      .insert([
+        {
+          user_uid: uid,
+          learning_result: JSON.stringify(statsObj),
+        },
+      ]);
+  } catch (error) {
+    console.error(error);
+  }
 }
 </script>
 
