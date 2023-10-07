@@ -118,6 +118,29 @@ function getNextExercise() {
   }
 }
 
+// compute how many old due exercises there are rn
+function oldDueExercisesCount() {
+  return exercises.filter(
+    (exercise) =>
+      exercise.stats.length > 0 &&
+      exercise.sr.dueAt <= Math.floor(new Date().getTime() / 1000)
+  ).length;
+}
+
+// function to change how many distinct main sentences (NOT exercises) have never been practiced
+function newSentencesCount() {
+  let NewMainSentenceArray = [];
+  for (const exercise of exercises) {
+    if (
+      exercise.stats.length == 0 &&
+      !NewMainSentenceArray.includes(exercise.sentence_en)
+    ) {
+      NewMainSentenceArray.push(exercise.sentence_en);
+    }
+  }
+  return NewMainSentenceArray.length;
+}
+
 function userSawExerciseBefore() {
   return exercise.value.stats.length > 0;
 }
@@ -185,12 +208,24 @@ async function handleAnswer(rating) {
 
 <template>
   <main class="p-2 flex flex-col items-center flex-grow justify-center">
-    <div class="flex gap-2" v-if="gameMode == 'undetermined'">
-      <button class="btn btn-success" @click="setGameMode('practice')">
+    <div
+      class="flex gap-2 flex-wrap justify-center"
+      v-if="gameMode == 'undetermined'"
+    >
+      <button
+        class="btn btn-success flex flex-grow flex-col"
+        @click="setGameMode('practice')"
+        :class="oldDueExercisesCount() > 0 ? 'btn-success' : 'btn-disabled'"
+      >
         Practice Previous Exercises
+        <small> ({{ oldDueExercisesCount() }} due) </small>
       </button>
-      <button class="btn btn-primary" @click="setGameMode('new')">
+      <button
+        class="btn btn-primary flex-grow flex flex-col"
+        @click="setGameMode('new')"
+      >
         Learn New Sentence
+        <small> ({{ newSentencesCount() }} left) </small>
       </button>
     </div>
     <!-- {{ exercise }} -->
@@ -207,18 +242,46 @@ async function handleAnswer(rating) {
       <div class="p-2"></div>
 
       <div class="flex w-full">
-      <!-- randomly choose between p1, p2, p3, p4 -->
-      <!-- do this with a modulo 4 operation on the exercise english length -->
-        
-        <img src="@/assets/p1.svg" alt="Avatar" class="w-10" v-if="exercise.sentence_en.length % 4 == 0" />
-        <img src="@/assets/p2.svg" alt="Avatar" class="w-10" v-else-if="exercise.sentence_en.length % 4 == 1" />
-        <img src="@/assets/p3.svg" alt="Avatar" class="w-10" v-else-if="exercise.sentence_en.length % 4 == 2" />
-        <img src="@/assets/p4.svg" alt="Avatar" class="w-10" v-else-if="exercise.sentence_en.length % 4 == 3" />
+        <!-- randomly choose between p1, p2, p3, p4 -->
+        <!-- do this with a modulo 4 operation on the exercise english length -->
+
+        <img
+          src="@/assets/p1.svg"
+          alt="Avatar"
+          class="w-10"
+          v-if="exercise.sentence_en.length % 4 == 0"
+        />
+        <img
+          src="@/assets/p2.svg"
+          alt="Avatar"
+          class="w-10"
+          v-else-if="exercise.sentence_en.length % 4 == 1"
+        />
+        <img
+          src="@/assets/p3.svg"
+          alt="Avatar"
+          class="w-10"
+          v-else-if="exercise.sentence_en.length % 4 == 2"
+        />
+        <img
+          src="@/assets/p4.svg"
+          alt="Avatar"
+          class="w-10"
+          v-else-if="exercise.sentence_en.length % 4 == 3"
+        />
 
         <div class="chat chat-start flex-grow w-full">
-        <!-- make green if revealed and isCorrect, otherwise if revealed set red -->
-          <div class="chat-bubble w-full"
-          :class="isRevealed ? (lastAnswerWasCorrect ? 'chat-bubble-success' : 'chat-bubble-error') : 'chat-bubble-primary'">
+          <!-- make green if revealed and isCorrect, otherwise if revealed set red -->
+          <div
+            class="chat-bubble w-full"
+            :class="
+              isRevealed
+                ? lastAnswerWasCorrect
+                  ? 'chat-bubble-success'
+                  : 'chat-bubble-error'
+                : 'chat-bubble-primary'
+            "
+          >
             <span class="text-3xl" v-if="!isRevealed">
               {{ exercise.question }}
             </span>
