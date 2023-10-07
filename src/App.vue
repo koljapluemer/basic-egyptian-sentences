@@ -1,9 +1,10 @@
 <script setup>
-import { ref, watch } from "vue";
+import { ref, watch, computed } from "vue";
 import { supabase } from "./lib/supabaseClient";
 
 const exercise = ref(null);
 const exercisesDoneThisSession = ref(0);
+const practiceExercisesDoneThisSession = ref(0);
 let streak = ref(0);
 const isRevealed = ref(false);
 let exercises = [];
@@ -45,6 +46,7 @@ if (localStorage.getItem("exercises")) {
 function setGameMode(mode) {
   gameMode.value = mode;
   if (mode == "practice") {
+    practiceExercisesDoneThisSession.value = 0;
     getNextExercise();
   } else if (mode == "new") {
     // find a random exercise that has not been practiced yet (stats length 0)
@@ -139,6 +141,7 @@ async function handleAnswer(rating) {
   lastAnswerWasCorrect.value = rating;
 
   if (gameMode.value == "practice") {
+    practiceExercisesDoneThisSession.value++;
     // if we're in practice mode, we're doing the usual naive SR
 
     // if answer correct, double interval, if incorrect, half interval (minimum 10)
@@ -197,6 +200,33 @@ async function handleAnswer(rating) {
     console.error(error);
   }
 }
+
+function progress() {
+  if (gameMode.value == "new") {
+    console.log("new");
+    // add the all the practiceBuckets of the currently practiced sentence
+    const practiceBuckets = exercises
+      .filter(
+        (exercise) => exercise.sentence_en == currentlyPracticedSentence.value
+      )
+      .map((exercise) => exercise.practiceBucket);
+    return {
+      current:
+        practiceBuckets.reduce((a, b) => a + b, 0) / practiceBuckets.length,
+      total:
+        exercises.filter(
+          (exercise) => exercise.sentence_en == currentlyPracticedSentence.value
+        ).length * 3,
+    };
+  } else if (gameMode.value == "practice") {
+    console.log("practice");
+    return {
+      current: practiceExercisesDoneThisSession.value,
+      total: oldDueExercisesCount() + practiceExercisesDoneThisSession.value,
+    };
+  }
+  return {}
+}
 </script>
 
 <template>
@@ -230,7 +260,7 @@ async function handleAnswer(rating) {
       </div>
     </div>
     <div
-      class="card bg-gray-600 shadow-xl m-4 p-4 flex flex-col justify-start items-center min-w-sm max-w-screen-xl"
+      class="card bg-gray-600 shadow-xl my-4 p-4 flex flex-col justify-start items-center min-w-sm max-w-screen-xl"
       v-else
       v-if="exercise"
       style="min-height: 390px"
@@ -294,13 +324,6 @@ async function handleAnswer(rating) {
         </div>
       </div>
 
-      <!-- <div
-        class="w-full text-center bg-green-700 mt-2 p-2 text-3xl"
-        v-if="isRevealed"
-      >
-        {{ exercise.sentence_ar }}
-      </div> -->
-
       <!-- randomly shuffle order of answer buttons whenever new exercise is picked, using flex reverse -->
       <div
         class="card-actions gap-2 mt-6 pt-2"
@@ -331,13 +354,28 @@ async function handleAnswer(rating) {
         <button class="btn" @click="getNextExercise">Show Next</button>
       </div>
     </div>
-    <button
-      class="btn btn-small self-justify-start"
-      @click="gameMode = 'undetermined'"
+    <div
+      class="flex gap-2 justify-between w-full items-center"
       v-if="gameMode != 'undetermined'"
     >
-      Exit Lesson
-    </button>
+      <div class="flex gap-2 flex-grow items-center">
+        <small>Progress:</small>
+        <progress
+          class="flex-grow h-2"
+          :value="progress().current"
+          :max="progress().total"
+        >
+          {{ progress().current }} / {{ progress().total }}
+        </progress>
+      </div>
+      <button
+        class="btn btn-small"
+        @click="gameMode = 'undetermined'"
+        v-if="gameMode != 'undetermined'"
+      >
+        Exit Lesson
+      </button>
+    </div>
   </main>
 
   <footer class="border-t-2 mt-10 w-full p-4 text-sm">
