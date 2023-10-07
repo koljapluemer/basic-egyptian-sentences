@@ -3,7 +3,7 @@ import { ref, watch } from "vue";
 import { supabase } from "./lib/supabaseClient";
 
 const exercise = ref(null);
-let exercisesDoneThisSession = 0;
+const exercisesDoneThisSession = ref(0);
 let streak = ref(0);
 const isRevealed = ref(false);
 let exercises = [];
@@ -144,7 +144,7 @@ function userSawExerciseBefore() {
 }
 
 async function handleAnswer(rating) {
-  exercisesDoneThisSession++;
+  exercisesDoneThisSession.value++;
   lastAnswerWasCorrect.value = rating;
 
   if (gameMode.value == "practice") {
@@ -206,27 +206,34 @@ async function handleAnswer(rating) {
 
 <template>
   <main class="p-2 flex flex-col items-center flex-grow justify-center">
-    <div
-      class="flex gap-2 flex-wrap justify-center"
-      v-if="gameMode == 'undetermined'"
-    >
-      <button
-        class="btn btn-success flex flex-grow flex-col"
-        @click="setGameMode('practice')"
-        :class="oldDueExercisesCount() > 0 ? 'btn-success' : 'btn-disabled'"
-      >
-        Practice Previous Exercises
-        <small> ({{ oldDueExercisesCount() }} due) </small>
-      </button>
-      <button
-        class="btn btn-primary flex-grow flex flex-col"
-        @click="setGameMode('new')"
-      >
-        Learn New Sentence
-        <small> ({{ newSentencesCount() }} left) </small>
-      </button>
+    <div v-if="gameMode == 'undetermined'">
+      <h2 class="text-4xl font-bold my-20">
+        <span v-if="exercisesDoneThisSession > 0">
+          Choose what to do next:
+        </span>
+        <span v-else>
+          Welcome to Arabic Basic Sentences Practice. <br />
+          Choose what to do first:
+        </span>
+      </h2>
+      <div class="flex gap-2 flex-wrap justify-center">
+        <button
+          class="btn btn-success flex flex-grow flex-col"
+          @click="setGameMode('practice')"
+          :class="oldDueExercisesCount() > 0 ? 'btn-success' : 'btn-disabled'"
+        >
+          Practice Previous Exercises
+          <small> ({{ oldDueExercisesCount() }} due) </small>
+        </button>
+        <button
+          class="btn btn-primary flex-grow flex flex-col"
+          @click="setGameMode('new')"
+        >
+          Learn New Sentence
+          <small> ({{ newSentencesCount() }} left) </small>
+        </button>
+      </div>
     </div>
-    <!-- {{ exercise }} -->
     <div
       class="card bg-gray-600 shadow-xl m-4 p-4 flex flex-col justify-start items-center min-w-sm max-w-screen-xl"
       v-else
