@@ -7,6 +7,7 @@ let exercisesDoneThisSession = 0;
 let streak = ref(0);
 const isRevealed = ref(false);
 let exercises = [];
+const lastAnswerWasCorrect = ref(false);
 
 const gameMode = ref("undetermined");
 const currentlyPracticedSentence = ref(null);
@@ -88,7 +89,6 @@ function getNextExercise() {
       Math.min(randomIndex, oldDueExercises.length - 1)
     ];
     exercise.value = newExercise;
-
   } else if (gameMode.value == "new") {
     console.log("Picking next exercise, gameMode is 'new'");
     // find an exercise with the currently practiced sentence with a practiceBucket value of less than 3
@@ -124,6 +124,7 @@ function userSawExerciseBefore() {
 
 async function handleAnswer(rating) {
   exercisesDoneThisSession++;
+  lastAnswerWasCorrect.value = rating;
 
   if (gameMode.value == "practice") {
     // if we're in practice mode, we're doing the usual naive SR
@@ -202,19 +203,41 @@ async function handleAnswer(rating) {
       <div id="prompt" class="p-2">
         {{ exercise.prompt }}
       </div>
-      <div class="mt-2">
-        {{ exercise.sentence_en }}
-      </div>
-      <div class="text-3xl p-2">
-        {{ exercise.question }}
+      <div class="mt-2"></div>
+      <div class="p-2"></div>
+
+      <div class="flex w-full">
+      <!-- randomly choose between p1, p2, p3, p4 -->
+      <!-- do this with a modulo 4 operation on the exercise english length -->
+        
+        <img src="@/assets/p1.svg" alt="Avatar" class="w-10" v-if="exercise.sentence_en.length % 4 == 0" />
+        <img src="@/assets/p2.svg" alt="Avatar" class="w-10" v-else-if="exercise.sentence_en.length % 4 == 1" />
+        <img src="@/assets/p3.svg" alt="Avatar" class="w-10" v-else-if="exercise.sentence_en.length % 4 == 2" />
+        <img src="@/assets/p4.svg" alt="Avatar" class="w-10" v-else-if="exercise.sentence_en.length % 4 == 3" />
+
+        <div class="chat chat-start flex-grow w-full">
+        <!-- make green if revealed and isCorrect, otherwise if revealed set red -->
+          <div class="chat-bubble w-full"
+          :class="isRevealed ? (lastAnswerWasCorrect ? 'chat-bubble-success' : 'chat-bubble-error') : 'chat-bubble-primary'">
+            <span class="text-3xl" v-if="!isRevealed">
+              {{ exercise.question }}
+            </span>
+            <span class="text-3xl" v-else>
+              {{ exercise.sentence_ar }}
+            </span>
+            <br />
+            <small> ({{ exercise.sentence_en }}) </small>
+          </div>
+        </div>
       </div>
 
-      <div
+      <!-- <div
         class="w-full text-center bg-green-700 mt-2 p-2 text-3xl"
         v-if="isRevealed"
       >
         {{ exercise.sentence_ar }}
-      </div>
+      </div> -->
+
       <!-- randomly shuffle order of answer buttons whenever new exercise is picked, using flex reverse -->
       <div
         class="card-actions gap-2 mt-6 pt-2"
@@ -245,7 +268,13 @@ async function handleAnswer(rating) {
         <button class="btn" @click="getNextExercise">Show Next</button>
       </div>
     </div>
-    <button class="btn btn-small" @click="gameMode = 'undetermined'" v-if="gameMode != 'undetermined'">Exit Lesson</button>
+    <button
+      class="btn btn-small self-justify-start"
+      @click="gameMode = 'undetermined'"
+      v-if="gameMode != 'undetermined'"
+    >
+      Exit Lesson
+    </button>
   </main>
 
   <footer class="border-t-2 mt-10 w-full p-4 text-sm">
