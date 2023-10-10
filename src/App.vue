@@ -2,6 +2,9 @@
 import { ref, watch, computed } from "vue";
 import { supabase } from "./lib/supabaseClient";
 
+const studyMSA = ref(true);
+const studyEgyptian = ref(true);
+
 const exercise = ref(null);
 const exercisesDoneThisSession = ref(0);
 const practiceExercisesDoneThisSession = ref(0);
@@ -45,7 +48,11 @@ if (localStorage.getItem("exercises")) {
   // if there are new exercises in the JSON (in case backend got updated), add them to the exercises array
   // find match by 'sentence_en' property
   for (const exercise of exercisesFromJSON) {
-    if (!exercisesFromStore.map((e) => e.sentence_en).includes(exercise.sentence_en)) {
+    if (
+      !exercisesFromStore
+        .map((e) => e.sentence_en)
+        .includes(exercise.sentence_en)
+    ) {
       console.log("adding new exercise", exercise);
       exercises.push(exercise);
     }
@@ -69,10 +76,21 @@ function setGameMode(mode) {
 
 function getNextExercise() {
   isRevealed.value = false;
+  let possibleExercises = exercises;
+
+  // filter out exercises that are not in the currently selected dialects
+  if (!studyMSA.value) {
+    possibleExercises = possibleExercises.filter(
+      (exercise) => exercise.dialect != "MSA"
+    );
+  }
+  if (!studyEgyptian.value) {
+    possibleExercises = possibleExercises.filter(
+      (exercise) => exercise.dialect != "Egyptian"
+    );
+  }
 
   if (gameMode.value == "practice") {
-    let possibleExercises = exercises;
-
     // also check if parent number is due (or due is null)
     const oldDueExercises = possibleExercises.filter(
       (exercise) =>
@@ -94,7 +112,7 @@ function getNextExercise() {
   } else if (gameMode.value == "new") {
     // find an exercise with the currently practiced sentence with a practiceBucket value of less than 3
     // also make sure its not the same twice in a row (except if there is only one exercise left)
-    let possibleExercises = exercises.filter(
+    possibleExercises = possibleExercises.filter(
       (possibleExercise) =>
         possibleExercise.sentence_en == currentlyPracticedSentence.value &&
         possibleExercise.practiceBucket < 3
@@ -120,7 +138,18 @@ function getNextExercise() {
 
 // compute how many old due exercises there are rn
 function oldDueExercisesCount() {
-  return exercises.filter(
+  let possibleExercises = exercises;
+  if (!studyMSA.value) {
+    possibleExercises = possibleExercises.filter(
+      (exercise) => exercise.dialect != "MSA"
+    );
+  }
+  if (!studyEgyptian.value) {
+    possibleExercises = possibleExercises.filter(
+      (exercise) => exercise.dialect != "Egyptian"
+    );
+  }
+  return possibleExercises.filter(
     (exercise) =>
       exercise.stats.length > 0 &&
       exercise.sr.dueAt <= Math.floor(new Date().getTime() / 1000)
@@ -130,7 +159,18 @@ function oldDueExercisesCount() {
 // function to change how many distinct main sentences (NOT exercises) have never been practiced
 function newSentencesCount() {
   let NewMainSentenceArray = [];
-  for (const exercise of exercises) {
+  let possibleExercises = exercises;
+  if (!studyMSA.value) {
+    possibleExercises = possibleExercises.filter(
+      (exercise) => exercise.dialect != "MSA"
+    );
+  }
+  if (!studyEgyptian.value) {
+    possibleExercises = possibleExercises.filter(
+      (exercise) => exercise.dialect != "Egyptian"
+    );
+  }
+  for (const exercise of possibleExercises) {
     if (
       exercise.stats.length == 0 &&
       !NewMainSentenceArray.includes(exercise.sentence_en)
@@ -234,7 +274,7 @@ function progress() {
       total: oldDueExercisesCount() + practiceExercisesDoneThisSession.value,
     };
   }
-  return {}
+  return {};
 }
 </script>
 
@@ -262,6 +302,7 @@ function progress() {
         <button
           class="btn btn-primary flex-grow flex flex-col"
           @click="setGameMode('new')"
+          :class="newSentencesCount() > 0 ? 'btn-primary' : 'btn-disabled'"
         >
           Learn New Sentence
           <small> ({{ newSentencesCount() }} left) </small>
@@ -283,31 +324,36 @@ function progress() {
       <div class="flex w-full">
         <!-- randomly choose between p1, p2, p3, p4 -->
         <!-- do this with a modulo 4 operation on the exercise english length -->
+        <div class="flex flex-col items-center">
+          <img
+            src="@/assets/p1.svg"
+            alt="Avatar"
+            class="w-10"
+            v-if="exercise.sentence_en.length % 4 == 0"
+          />
+          <img
+            src="@/assets/p2.svg"
+            alt="Avatar"
+            class="w-10"
+            v-else-if="exercise.sentence_en.length % 4 == 1"
+          />
+          <img
+            src="@/assets/p3.svg"
+            alt="Avatar"
+            class="w-10"
+            v-else-if="exercise.sentence_en.length % 4 == 2"
+          />
+          <img
+            src="@/assets/p4.svg"
+            alt="Avatar"
+            class="w-10"
+            v-else-if="exercise.sentence_en.length % 4 == 3"
+          />
 
-        <img
-          src="@/assets/p1.svg"
-          alt="Avatar"
-          class="w-10"
-          v-if="exercise.sentence_en.length % 4 == 0"
-        />
-        <img
-          src="@/assets/p2.svg"
-          alt="Avatar"
-          class="w-10"
-          v-else-if="exercise.sentence_en.length % 4 == 1"
-        />
-        <img
-          src="@/assets/p3.svg"
-          alt="Avatar"
-          class="w-10"
-          v-else-if="exercise.sentence_en.length % 4 == 2"
-        />
-        <img
-          src="@/assets/p4.svg"
-          alt="Avatar"
-          class="w-10"
-          v-else-if="exercise.sentence_en.length % 4 == 3"
-        />
+          <small class="uppercase">
+            {{ exercise.dialect }}
+          </small>
+        </div>
 
         <div class="chat chat-start flex-grow w-full">
           <!-- make green if revealed and isCorrect, otherwise if revealed set red -->
@@ -388,8 +434,28 @@ function progress() {
   </main>
 
   <footer class="border-t-2 mt-10 w-full p-4 text-sm">
+    <!-- red background when nothing is selected -->
+    <div class="mb-4" :class="studyMSA || studyEgyptian ? '' : 'bg-red-700 text-white'">
+      <fieldset class="flex gap-2  px-2">
+        <input
+          type="checkbox"
+          id="check-msa"
+          v-model="studyMSA"
+          class="form-checkbox"
+        />
+        <label for="check-msa">Include MSA Sentences</label>
+      </fieldset>
+      <fieldset class="flex gap-2  px-2">
+        <input
+          type="checkbox"
+          id="check-msa"
+          v-model="studyEgyptian"
+          class="form-checkbox"
+        />
+        <label for="check-msa">Include Egyptian Sentences</label>
+      </fieldset>
+    </div>
     <ul class="flex flex-col gap-2">
-      <li>Transliterations are Egyptian Arabic.</li>
       <li>
         Made by
         <a class="underline" href="hello@koljapluemer.com">Kolja Sam Pluemer</a
