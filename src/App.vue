@@ -39,8 +39,17 @@ for (const exercise of data["exercises"]) {
 
 // TODObut, implement: new exercises should be included, and deleted should be deleted
 if (localStorage.getItem("exercises")) {
-  // if it is in localStorage, set the sentencesBank to the localStorage value
-  exercises = JSON.parse(localStorage.getItem("exercises"));
+  const exercisesFromStore = JSON.parse(localStorage.getItem("exercises"));
+  const exercisesFromJSON = exercises;
+  exercises = exercisesFromStore;
+  // if there are new exercises in the JSON (in case backend got updated), add them to the exercises array
+  // find match by 'sentence_en' property
+  for (const exercise of exercisesFromJSON) {
+    if (!exercisesFromStore.map((e) => e.sentence_en).includes(exercise.sentence_en)) {
+      console.log("adding new exercise", exercise);
+      exercises.push(exercise);
+    }
+  }
 }
 
 function setGameMode(mode) {
