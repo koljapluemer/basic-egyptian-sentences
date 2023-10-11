@@ -15,6 +15,7 @@ const lastAnswerWasCorrect = ref(false);
 
 const gameMode = ref("undetermined");
 const currentlyPracticedSentence = ref(null);
+let exercisesInLessonCounter = 0;
 
 // if uid is not in localStorage, create one and save
 let uid;
@@ -60,6 +61,7 @@ if (localStorage.getItem("exercises")) {
 }
 
 function setGameMode(mode) {
+  exercisesInLessonCounter = 0;
   gameMode.value = mode;
   if (mode == "practice") {
     practiceExercisesDoneThisSession.value = 0;
@@ -75,6 +77,11 @@ function setGameMode(mode) {
 }
 
 function getNextExercise() {
+  exercisesInLessonCounter++;
+  if (exercisesInLessonCounter > 10) {
+    gameMode.value = "undetermined";
+    return;
+  }
   isRevealed.value = false;
   let possibleExercises = exercises;
 
