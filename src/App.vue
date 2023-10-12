@@ -1,6 +1,8 @@
 <script setup>
 import { ref, watch, computed } from "vue";
 import { supabase } from "./lib/supabaseClient";
+// bar chart
+import BarChart from "./components/BarChart.vue";
 
 const studyMSA = ref(true);
 const studyEgyptian = ref(true);
@@ -438,12 +440,26 @@ function progress() {
         Exit Lesson
       </button>
     </div>
+
+    <article>
+      <BarChart
+        class="chart"
+        :data-set="[0, 1]"
+        :margin-left="40"
+        :margin-top="40"
+        :tick-count="5"
+        :bar-padding="0.5"
+      />
+    </article>
   </main>
 
   <footer class="border-t-2 mt-10 w-full p-4 text-sm">
     <!-- red background when nothing is selected -->
-    <div class="mb-4" :class="studyMSA || studyEgyptian ? '' : 'bg-red-700 text-white'">
-      <fieldset class="flex gap-2  px-2">
+    <div
+      class="mb-4"
+      :class="studyMSA || studyEgyptian ? '' : 'bg-red-700 text-white'"
+    >
+      <fieldset class="flex gap-2 px-2">
         <input
           type="checkbox"
           id="check-msa"
@@ -452,7 +468,7 @@ function progress() {
         />
         <label for="check-msa">Include MSA Sentences</label>
       </fieldset>
-      <fieldset class="flex gap-2  px-2">
+      <fieldset class="flex gap-2 px-2">
         <input
           type="checkbox"
           id="check-msa"

@@ -3,6 +3,7 @@
 - find a kind of win celebration when finishing a sentence chapter
 - interrupt queue practice if it's longer than n exercises
 - give player some incentive to keep going
+- progress bar does not count to 10 (it still uses the old, complicated system) - but I don't want to remove that before it's clear that the 10 limit is a good idea
 
 ## Could 
 
