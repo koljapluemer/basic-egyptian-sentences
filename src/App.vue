@@ -441,7 +441,7 @@ function progress() {
       </button>
     </div>
 
-    <article>
+    <article v-if="false">
       <BarChart
         class="chart"
         :data-set="[0, 1]"
