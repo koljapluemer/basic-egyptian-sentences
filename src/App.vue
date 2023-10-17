@@ -346,7 +346,7 @@ watch(currentTime, (newVal) => {
         v-if="exercise"
         style="min-height: 390px"
       >
-        <div id="prompt" class="p-2">
+        <div id="prompt" class="p-2" style="white-space: pre">
           {{ exercise.prompt }}
         </div>
         <div class="mt-2"></div>
@@ -394,15 +394,19 @@ watch(currentTime, (newVal) => {
                   : 'chat-bubble-primary'
               "
             >
-              <small class="mb-4" v-if="isRevealed">{{
+              <small class="mb-4" v-if="isRevealed" style="white-space: pre">{{
                 exercise.transliteration
               }}</small>
               <br />
 
-              <span class="text-3xl" v-if="!isRevealed">
+              <span
+                class="text-3xl"
+                v-if="!isRevealed"
+                style="white-space: pre"
+              >
                 {{ exercise.question }}
               </span>
-              <span class="text-3xl" v-else>
+              <span class="text-3xl" v-else style="white-space: pre">
                 {{ exercise.sentence_ar }}
               </span>
               <br />
