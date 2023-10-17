@@ -17,8 +17,6 @@ const gameMode = ref("undetermined");
 const currentlyPracticedSentence = ref(null);
 let exercisesInLessonCounter = 0;
 
-
-
 const countingDown = ref(false);
 const countdown = ref(3);
 
@@ -79,12 +77,13 @@ function getNextExercise() {
   }
   exercise.value =
     possibleExercises[Math.floor(Math.random() * possibleExercises.length)];
+  timerRunning.value = true;
+
 }
 
 function userSawExerciseBefore() {
   return exercise.value.stats.length > 0;
 }
-
 
 function moveToNextExercise() {
   console.log("moveToNextExercise");
@@ -95,14 +94,21 @@ function moveToNextExercise() {
   }
 }
 
-async function handleAnswer(rating) {
+function handleAnswer(rating) {
+  // if correct, add 5 seconds to total time, otherwise substract two seconds (since we're counting down it's reversed)
+  if (rating) {
+    currentTime.value -= 5;
+  } else {
+    currentTime.value += 2;
+  }
+
+  timerRunning.value = false;
   isRevealed.value = true;
   // trigger automatic next exercise after 3 seconds
   lastExercise.value = exercise.value;
   setTimeout(() => {
     moveToNextExercise();
-  }, 3000);
-
+  }, 5000);
 
   exercisesDoneThisSession.value++;
   lastAnswerWasCorrect.value = rating;
@@ -145,6 +151,10 @@ async function handleAnswer(rating) {
   exercise.value.stats.push(statsObj);
   // save the sentencesBank and exercises to localStorage
   localStorage.setItem("exercises", JSON.stringify(exercises));
+  sendDataToBackend(statsObj);
+}
+
+async function sendDataToBackend(statsObj) {
   try {
     console.log("saving to supabase");
     const { data, error } = await supabase
@@ -163,8 +173,10 @@ async function handleAnswer(rating) {
 function setGameMode(mode) {
   gameMode.value = mode;
   exercisesDoneThisSession.value = 0;
-  console.log("gameMode", gameMode.value);
-  getNextExercise();
+  if (mode == "go") {
+    startTimer();
+    getNextExercise();
+  }
 }
 
 const isReverseOrder = ref(false);
@@ -176,7 +188,7 @@ onMounted(() => {
     if (e.key == "ArrowLeft") {
       console.log("left", gameMode.value, isRevealed.value);
       if (gameMode.value == "go" && !isRevealed.value) {
-        console.log("left triggered next card")
+        console.log("left triggered next card");
         handleAnswer(!isReverseOrder.value);
       }
     } else if (e.key == "ArrowRight") {
@@ -191,6 +203,31 @@ onMounted(() => {
   });
 });
 
+const totalTime = ref(60.0); // Total time in seconds
+const currentTime = ref(0.0); // Current time in seconds
+const timerRunning = ref(false);
+const timer = ref(null);
+
+const remainingTime = computed(() => totalTime.value - currentTime.value);
+const progressStyle = computed(() => ({
+  width: `${(1 - currentTime.value / totalTime.value) * 100}%`,
+}));
+
+function startTimer() {
+  timerRunning.value = true;
+  timer.value = setInterval(updateTime, 1000);
+}
+
+function updateTime() {
+  if (timerRunning.value) {
+    currentTime.value += 1;
+    if (currentTime.value >= totalTime.value) {
+      currentTime.value = 0.0;
+      timerRunning.value = false;
+      gameMode.value = "undetermined";
+    }
+  }
+}
 </script>
 
 <template>
@@ -205,107 +242,108 @@ onMounted(() => {
         </button>
       </div>
     </div>
-    <div
-      class="card bg-gray-600 shadow-xl my-4 p-4 flex flex-col justify-start items-center min-w-sm max-w-screen-xl"
-      v-else
-      v-if="exercise"
-      style="min-height: 390px"
-    >
-      <div id="prompt" class="p-2">
-        {{ exercise.prompt }}
-      </div>
-      <div class="mt-2"></div>
-      <div class="p-2"></div>
 
-      <div class="flex w-full">
-        <!-- randomly choose between p1, p2, p3, p4 -->
-        <!-- do this with a modulo 4 operation on the exercise english length -->
-        <div class="flex flex-col items-center">
-          <img
-            src="@/assets/p1.svg"
-            alt="Avatar"
-            class="w-10"
-            v-if="exercise.sentence_en.length % 4 == 0"
-          />
-          <img
-            src="@/assets/p2.svg"
-            alt="Avatar"
-            class="w-10"
-            v-else-if="exercise.sentence_en.length % 4 == 1"
-          />
-          <img
-            src="@/assets/p3.svg"
-            alt="Avatar"
-            class="w-10"
-            v-else-if="exercise.sentence_en.length % 4 == 2"
-          />
-          <img
-            src="@/assets/p4.svg"
-            alt="Avatar"
-            class="w-10"
-            v-else-if="exercise.sentence_en.length % 4 == 3"
-          />
+    <div class="" v-else>
+      <div class="countdown-timer">
+        <div class="progress-bar">
+          <div class="progress" :style="progressStyle"></div>
         </div>
+        <p>Time Remaining: {{ Math.round(remainingTime) }}s</p>
+        <!-- <button @click="startTimer" v-if="!timerRunning">Start</button> -->
+        <!-- <button @click="stopTimer" v-if="timerRunning">Stop</button> -->
+      </div>
 
-        <div class="chat chat-start flex-grow w-full">
-          <!-- make green if revealed and isCorrect, otherwise if revealed set red -->
-          <div
-            class="chat-bubble w-full"
-            :class="
-              isRevealed
-                ? lastAnswerWasCorrect
-                  ? 'chat-bubble-success'
-                  : 'chat-bubble-error'
-                : 'chat-bubble-primary'
-            "
-          >
-            <small class="mb-4" v-if="isRevealed">{{
-              exercise.transliteration
-            }}</small>
-            <br />
+      <div
+        class="card bg-gray-600 shadow-xl my-4 p-4 flex flex-col justify-start items-center min-w-sm max-w-screen-xl"
+        v-if="exercise"
+        style="min-height: 390px"
+      >
+        <div id="prompt" class="p-2">
+          {{ exercise.prompt }}
+        </div>
+        <div class="mt-2"></div>
+        <div class="p-2"></div>
 
-            <span class="text-3xl" v-if="!isRevealed">
-              {{ exercise.question }}
-            </span>
-            <span class="text-3xl" v-else>
-              {{ exercise.sentence_ar }}
-            </span>
-            <br />
-            <small> ({{ exercise.sentence_en }}) </small>
+        <div class="flex w-full">
+          <!-- randomly choose between p1, p2, p3, p4 -->
+          <!-- do this with a modulo 4 operation on the exercise english length -->
+          <div class="flex flex-col items-center">
+            <img
+              src="@/assets/p1.svg"
+              alt="Avatar"
+              class="w-10"
+              v-if="exercise.sentence_en.length % 4 == 0"
+            />
+            <img
+              src="@/assets/p2.svg"
+              alt="Avatar"
+              class="w-10"
+              v-else-if="exercise.sentence_en.length % 4 == 1"
+            />
+            <img
+              src="@/assets/p3.svg"
+              alt="Avatar"
+              class="w-10"
+              v-else-if="exercise.sentence_en.length % 4 == 2"
+            />
+            <img
+              src="@/assets/p4.svg"
+              alt="Avatar"
+              class="w-10"
+              v-else-if="exercise.sentence_en.length % 4 == 3"
+            />
+          </div>
+
+          <div class="chat chat-start flex-grow w-full">
+            <!-- make green if revealed and isCorrect, otherwise if revealed set red -->
+            <div
+              class="chat-bubble w-full"
+              :class="
+                isRevealed
+                  ? lastAnswerWasCorrect
+                    ? 'chat-bubble-success'
+                    : 'chat-bubble-error'
+                  : 'chat-bubble-primary'
+              "
+            >
+              <small class="mb-4" v-if="isRevealed">{{
+                exercise.transliteration
+              }}</small>
+              <br />
+
+              <span class="text-3xl" v-if="!isRevealed">
+                {{ exercise.question }}
+              </span>
+              <span class="text-3xl" v-else>
+                {{ exercise.sentence_ar }}
+              </span>
+              <br />
+              <small> ({{ exercise.sentence_en }}) </small>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- randomly shuffle order of answer buttons whenever new exercise is picked, using flex reverse -->
-      <div
-        class="card-actions gap-2 mt-6 pt-2"
-        v-if="!isRevealed"
-        :class="isReverseOrder ? 'flex-row-reverse' : 'flex-row'"
-        :key="exercise"
-      >
-        <button
-          class="btn text-3xl"
-          @click="
-            handleAnswer(true);
-          "
+        <!-- randomly shuffle order of answer buttons whenever new exercise is picked, using flex reverse -->
+        <div
+          class="card-actions gap-2 mt-6 pt-2"
+          v-if="!isRevealed"
+          :class="isReverseOrder ? 'flex-row-reverse' : 'flex-row'"
+          :key="exercise"
         >
-          {{ exercise.correct_answer }}
-        </button>
-        <!-- also allow the user to keypress left and right -->
-        <!-- however, we have to dynamically check whether left is the correct or the wrong answer, since it is randomly shuffled -->
-        <button
-          class="btn text-3xl"
-          @click="
-            handleAnswer(false);
-          "
-        >
-          {{ exercise.wrong_answer }}
-        </button>
-      </div>
-      <div class="card-actions gap-2 mt-6 pt-2" v-else>
-        <button class="btn fill-button" @click="getNextExercise">
-          Show Next
-        </button>
+          <button class="btn text-3xl" @click="handleAnswer(true)">
+            {{ exercise.correct_answer }}
+          </button>
+          <!-- also allow the user to keypress left and right -->
+          <!-- however, we have to dynamically check whether left is the correct or the wrong answer, since it is randomly shuffled -->
+          <button class="btn text-3xl" @click="handleAnswer(false)">
+            {{ exercise.wrong_answer }}
+          </button>
+        </div>
+        <div class="card-actions gap-2 mt-6 pt-2" v-else>
+          <button class="btn fill-button" @click="getNextExercise">
+            Show Next
+          </button>
+        </div>
       </div>
     </div>
     <article v-if="false">
@@ -354,12 +392,30 @@ onMounted(() => {
   background: linear-gradient(to right, #641ae6 50%, transparent 0);
   background-size: 200% 100%;
   background-position: right;
-  animation: makeItfadeIn 3s 0s forwards linear;
+  animation: makeItfadeIn 5s 0s forwards linear;
 }
 
 @keyframes makeItfadeIn {
   100% {
     background-position: left;
   }
+}
+
+.countdown-timer {
+  text-align: center;
+}
+
+.progress-bar {
+  width: 100%;
+  background-color: #ccc;
+  height: 20px;
+  position: relative;
+  border-radius: 12px;
+}
+
+.progress-bar div {
+  height: 100%;
+  background-color: #4caf50;
+  transition: width 1s linear;
 }
 </style>
