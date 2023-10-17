@@ -9,6 +9,7 @@
 ## Could 
 
 - give a more fine-grained access control to supabase
+- when learning new sentences, sometimes you get the same thing twice
 
 ## Done
 - find a good UI layout for the card instead using no hierarchy and random styles all over the place

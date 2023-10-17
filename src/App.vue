@@ -376,6 +376,8 @@ function progress() {
                 : 'chat-bubble-primary'
             "
           >
+            <small class="mb-4" v-if="isRevealed">{{ exercise.transliteration }}</small> <br >
+
             <span class="text-3xl" v-if="!isRevealed">
               {{ exercise.question }}
             </span>
@@ -384,6 +386,7 @@ function progress() {
             </span>
             <br />
             <small> ({{ exercise.sentence_en }}) </small>
+         
           </div>
         </div>
       </div>
@@ -456,6 +459,7 @@ function progress() {
   <footer class="border-t-2 mt-10 w-full p-4 text-sm">
     <!-- red background when nothing is selected -->
     <div
+    v-if="false"
       class="mb-4"
       :class="studyMSA || studyEgyptian ? '' : 'bg-red-700 text-white'"
     >
