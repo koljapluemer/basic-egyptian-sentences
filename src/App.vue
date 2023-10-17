@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, computed } from "vue";
+import { ref, watch, computed, onMounted } from "vue";
 import { supabase } from "./lib/supabaseClient";
 // bar chart
 import BarChart from "./components/BarChart.vue";
@@ -66,6 +66,7 @@ if (localStorage.getItem("exercises")) {
 }
 
 function getNextExercise() {
+  isReverseOrder.value = Math.random() < 0.5;
   exercisesInLessonCounter++;
 
   isRevealed.value = false;
@@ -95,6 +96,7 @@ function moveToNextExercise() {
 }
 
 async function handleAnswer(rating) {
+  isRevealed.value = true;
   // trigger automatic next exercise after 3 seconds
   lastExercise.value = exercise.value;
   setTimeout(() => {
@@ -164,6 +166,25 @@ function setGameMode(mode) {
   console.log("gameMode", gameMode.value);
   getNextExercise();
 }
+
+const isReverseOrder = ref(false);
+
+// add global keypress event listener in mounted:
+onMounted(() => {
+  window.addEventListener("keydown", (e) => {
+    if (e.key == "ArrowLeft") {
+      console.log("left", gameMode.value, isRevealed.value);
+      if (gameMode.value == "go" && !isRevealed.value) {
+        console.log("left triggered next card")
+        handleAnswer(!isReverseOrder.value);
+      }
+    } else if (e.key == "ArrowRight") {
+      if (gameMode.value == "go" && !isRevealed.value) {
+        handleAnswer(isReverseOrder.value);
+      }
+    }
+  });
+});
 
 </script>
 
@@ -254,22 +275,22 @@ function setGameMode(mode) {
       <div
         class="card-actions gap-2 mt-6 pt-2"
         v-if="!isRevealed"
-        :class="Math.random() > 0.5 ? 'flex-row-reverse' : 'flex-row'"
+        :class="isReverseOrder ? 'flex-row-reverse' : 'flex-row'"
         :key="exercise"
       >
         <button
           class="btn text-3xl"
           @click="
-            isRevealed = true;
             handleAnswer(true);
           "
         >
           {{ exercise.correct_answer }}
         </button>
+        <!-- also allow the user to keypress left and right -->
+        <!-- however, we have to dynamically check whether left is the correct or the wrong answer, since it is randomly shuffled -->
         <button
           class="btn text-3xl"
           @click="
-            isRevealed = true;
             handleAnswer(false);
           "
         >
@@ -325,7 +346,7 @@ function setGameMode(mode) {
 
 <style scoped>
 .fill-button {
-  background: linear-gradient(to right, #641AE6 50%, transparent 0);
+  background: linear-gradient(to right, #641ae6 50%, transparent 0);
   background-size: 200% 100%;
   background-position: right;
   animation: makeItfadeIn 3s 0s forwards linear;
