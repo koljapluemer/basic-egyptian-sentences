@@ -5,6 +5,7 @@ import { supabase } from "./lib/supabaseClient";
 import BarChart from "./components/BarChart.vue";
 
 const exercise = ref(null);
+const lastExercise = ref(null);
 const exercisesDoneThisSession = ref(0);
 const practiceExercisesDoneThisSession = ref(0);
 let streak = ref(0);
@@ -15,6 +16,11 @@ const lastAnswerWasCorrect = ref(false);
 const gameMode = ref("undetermined");
 const currentlyPracticedSentence = ref(null);
 let exercisesInLessonCounter = 0;
+
+
+
+const countingDown = ref(false);
+const countdown = ref(3);
 
 // if uid is not in localStorage, create one and save
 let uid;
@@ -70,15 +76,32 @@ function getNextExercise() {
     alert("You have absolutely nothing to practice right now. Good job.");
     return;
   }
-  exercise.value = possibleExercises[
-    Math.floor(Math.random() * possibleExercises.length)
-  ];
+  exercise.value =
+    possibleExercises[Math.floor(Math.random() * possibleExercises.length)];
 }
 
 function userSawExerciseBefore() {
   return exercise.value.stats.length > 0;
 }
+
+
+function moveToNextExercise() {
+  console.log("moveToNextExercise");
+
+  if (lastExercise.value == exercise.value && isRevealed.value) {
+    console.log("skipping");
+    getNextExercise();
+  }
+}
+
 async function handleAnswer(rating) {
+  // trigger automatic next exercise after 3 seconds
+  lastExercise.value = exercise.value;
+  setTimeout(() => {
+    moveToNextExercise();
+  }, 3000);
+
+
   exercisesDoneThisSession.value++;
   lastAnswerWasCorrect.value = rating;
 
@@ -148,7 +171,6 @@ function setGameMode(mode) {
   <main class="p-2 flex flex-col items-center flex-grow justify-center">
     <div v-if="gameMode == 'undetermined'">
       <div class="flex gap-2 flex-wrap justify-center">
-      
         <button
           class="btn btn-primary flex-grow flex flex-col btn-primary"
           @click="setGameMode('go')"
@@ -197,8 +219,6 @@ function setGameMode(mode) {
             class="w-10"
             v-else-if="exercise.sentence_en.length % 4 == 3"
           />
-
-  
         </div>
 
         <div class="chat chat-start flex-grow w-full">
@@ -257,7 +277,9 @@ function setGameMode(mode) {
         </button>
       </div>
       <div class="card-actions gap-2 mt-6 pt-2" v-else>
-        <button class="btn" @click="getNextExercise">Show Next</button>
+        <button class="btn fill-button" @click="getNextExercise">
+          Show Next
+        </button>
       </div>
     </div>
     <article v-if="false">
@@ -301,4 +323,17 @@ function setGameMode(mode) {
   </footer>
 </template>
 
-<style scoped></style>
+<style scoped>
+.fill-button {
+  background: linear-gradient(to right, #641AE6 50%, transparent 0);
+  background-size: 200% 100%;
+  background-position: right;
+  animation: makeItfadeIn 3s 0s forwards linear;
+}
+
+@keyframes makeItfadeIn {
+  100% {
+    background-position: left;
+  }
+}
+</style>
