@@ -15,6 +15,7 @@ const lastExercise = ref(null);
 const exercisesDoneThisSession = ref(0);
 const practiceExercisesDoneThisSession = ref(0);
 const streak = ref(0);
+const incorrectAnswerCounter = ref(0);
 const isRevealed = ref(false);
 let exercises = [];
 const lastAnswerWasCorrect = ref(false);
@@ -138,11 +139,13 @@ function handleAnswer(rating) {
     toaster.success(`+${pointsToAdd}`);
   } else {
     streak.value = 0;
+    incorrectAnswerCounter.value++;
     exercise.value.sr.repetitions = 0;
 
     // time and score
-    currentTime.value += 2;
-    toaster.error(`-2 seconds`);
+    const addToTime = 2 * incorrectAnswerCounter.value + 1;
+    currentTime.value += addToTime;
+    toaster.error(`-${addToTime} seconds`);
   }
 
   // set due to now + interval
@@ -232,6 +235,7 @@ function updateTime() {
     }
   }
 }
+
 </script>
 
 <template>
