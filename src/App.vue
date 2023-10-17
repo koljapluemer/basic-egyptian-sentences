@@ -4,11 +4,17 @@ import { supabase } from "./lib/supabaseClient";
 // bar chart
 import BarChart from "./components/BarChart.vue";
 
+import { createToaster } from "@meforma/vue-toaster";
+
+const toaster = createToaster({
+  position: "top-right",
+});
+
 const exercise = ref(null);
 const lastExercise = ref(null);
 const exercisesDoneThisSession = ref(0);
 const practiceExercisesDoneThisSession = ref(0);
-let streak = ref(0);
+const streak = ref(0);
 const isRevealed = ref(false);
 let exercises = [];
 const lastAnswerWasCorrect = ref(false);
@@ -19,6 +25,10 @@ let exercisesInLessonCounter = 0;
 
 const countingDown = ref(false);
 const countdown = ref(3);
+
+const score = ref(0);
+
+const timeoutId = ref(null);
 
 // if uid is not in localStorage, create one and save
 let uid;
@@ -42,7 +52,6 @@ for (const exercise of data["exercises"]) {
   exercise.stats = [];
   exercises.push(exercise);
 }
-console.log("exercises", exercises);
 
 // TODObut, implement: new exercises should be included, and deleted should be deleted
 if (localStorage.getItem("exercises")) {
@@ -57,13 +66,13 @@ if (localStorage.getItem("exercises")) {
         .map((e) => e.sentence_en)
         .includes(exercise.sentence_en)
     ) {
-      console.log("adding new exercise", exercise);
       exercises.push(exercise);
     }
   }
 }
 
 function getNextExercise() {
+  clearTimeout(timeoutId.value);
   isReverseOrder.value = Math.random() < 0.5;
   exercisesInLessonCounter++;
 
@@ -78,7 +87,6 @@ function getNextExercise() {
   exercise.value =
     possibleExercises[Math.floor(Math.random() * possibleExercises.length)];
   timerRunning.value = true;
-
 }
 
 function userSawExerciseBefore() {
@@ -86,27 +94,16 @@ function userSawExerciseBefore() {
 }
 
 function moveToNextExercise() {
-  console.log("moveToNextExercise");
-
-  if (lastExercise.value == exercise.value && isRevealed.value) {
-    console.log("skipping");
+  if (isRevealed.value) {
     getNextExercise();
   }
 }
 
 function handleAnswer(rating) {
-  // if correct, add 5 seconds to total time, otherwise substract two seconds (since we're counting down it's reversed)
-  if (rating) {
-    currentTime.value -= 5;
-  } else {
-    currentTime.value += 2;
-  }
-
   timerRunning.value = false;
   isRevealed.value = true;
   // trigger automatic next exercise after 3 seconds
-  lastExercise.value = exercise.value;
-  setTimeout(() => {
+  timeoutId.value = setTimeout(() => {
     moveToNextExercise();
   }, 5000);
 
@@ -132,11 +129,20 @@ function handleAnswer(rating) {
         16 * 60 * 60
       );
     }
+
+    // time and score
+    currentTime.value -= 5;
+    toaster.success(`+5 seconds`);
+    const pointsToAdd = 10 + streak.value * 2;
+    score.value += pointsToAdd;
+    toaster.success(`+${pointsToAdd}`);
   } else {
     streak.value = 0;
-
     exercise.value.sr.repetitions = 0;
-    // divide level by 2 and round down
+
+    // time and score
+    currentTime.value += 2;
+    toaster.error(`-2 seconds`);
   }
 
   // set due to now + interval
@@ -156,7 +162,6 @@ function handleAnswer(rating) {
 
 async function sendDataToBackend(statsObj) {
   try {
-    console.log("saving to supabase");
     const { data, error } = await supabase
       .from("learning_data_cloze_sentences")
       .insert([
@@ -172,6 +177,7 @@ async function sendDataToBackend(statsObj) {
 
 function setGameMode(mode) {
   gameMode.value = mode;
+  score.value = 0;
   exercisesDoneThisSession.value = 0;
   if (mode == "go") {
     startTimer();
@@ -186,9 +192,7 @@ const isReverseOrder = ref(false);
 onMounted(() => {
   window.addEventListener("keydown", (e) => {
     if (e.key == "ArrowLeft") {
-      console.log("left", gameMode.value, isRevealed.value);
       if (gameMode.value == "go" && !isRevealed.value) {
-        console.log("left triggered next card");
         handleAnswer(!isReverseOrder.value);
       }
     } else if (e.key == "ArrowRight") {
@@ -244,6 +248,9 @@ function updateTime() {
     </div>
 
     <div class="" v-else>
+      <div class="">
+        <h2 class="text-2xl font-bold text-center">{{ score }}</h2>
+      </div>
       <div class="countdown-timer">
         <div class="progress-bar">
           <div class="progress" :style="progressStyle"></div>
