@@ -3,6 +3,8 @@ import { ref, watch, computed } from "vue";
 import { supabase } from "./lib/supabaseClient";
 // bar chart
 import BarChart from "./components/BarChart.vue";
+import * as fsrsJs from "fsrs.js";
+
 
 const studyMSA = ref(true);
 const studyEgyptian = ref(true);
@@ -19,6 +21,12 @@ const gameMode = ref("undetermined");
 const currentlyPracticedSentence = ref(null);
 let exercisesInLessonCounter = 0;
 
+
+let fsrs = new fsrsJs.FSRS;
+let rating= fsrsJs.Rating;
+let state = fsrsJs.State;
+
+
 // if uid is not in localStorage, create one and save
 let uid;
 if (localStorage.getItem("uid")) {
@@ -31,36 +39,33 @@ if (localStorage.getItem("uid")) {
 // EXERCISES IMPORTER FROM BACKEND
 import data from "./clozes.json";
 
-// for every main sentence, attach exercises that match the id of children
 for (const exercise of data["exercises"]) {
-  exercise.sr = {
-    interval: 10,
-    repetitions: 0,
-    dueAt: Math.floor(new Date().getTime() / 1000),
-  };
+  exercise.sr = new fsrsJs.Card;
   exercise.practiceBucket = 0;
   exercise.stats = [];
   exercises.push(exercise);
 }
+  console.log("exercises", exercises);
+
 
 // TODObut, implement: new exercises should be included, and deleted should be deleted
-if (localStorage.getItem("exercises")) {
-  const exercisesFromStore = JSON.parse(localStorage.getItem("exercises"));
-  const exercisesFromJSON = exercises;
-  exercises = exercisesFromStore;
-  // if there are new exercises in the JSON (in case backend got updated), add them to the exercises array
-  // find match by 'sentence_en' property
-  for (const exercise of exercisesFromJSON) {
-    if (
-      !exercisesFromStore
-        .map((e) => e.sentence_en)
-        .includes(exercise.sentence_en)
-    ) {
-      console.log("adding new exercise", exercise);
-      exercises.push(exercise);
-    }
-  }
-}
+// if (localStorage.getItem("exercises")) {
+//   const exercisesFromStore = JSON.parse(localStorage.getItem("exercises"));
+//   const exercisesFromJSON = exercises;
+//   exercises = exercisesFromStore;
+//   // if there are new exercises in the JSON (in case backend got updated), add them to the exercises array
+//   // find match by 'sentence_en' property
+//   for (const exercise of exercisesFromJSON) {
+//     if (
+//       !exercisesFromStore
+//         .map((e) => e.sentence_en)
+//         .includes(exercise.sentence_en)
+//     ) {
+//       console.log("adding new exercise", exercise);
+//       exercises.push(exercise);
+//     }
+//   }
+// }
 
 function setGameMode(mode) {
   exercisesInLessonCounter = 0;
@@ -79,6 +84,29 @@ function setGameMode(mode) {
 }
 
 function getNextExercise() {
+  isRevealed.value = false;
+  // get all exercises where exercise.sr.due is in the past
+  // if there are no exercises due, make a popup and return
+  const dueExercises = exercises.filter(
+    (exercise) =>
+      exercise.sr.due <= new Date() 
+  );
+  console.log("dueExercises:", dueExercises.length, "data:", dueExercises);
+  if (dueExercises.length == 0) {
+    alert("You have nothing left to do right now! Come back later!");
+    return;
+  }
+  // sort due exercises by number of stats, and get the one with the most stats
+  // this way, we're preferring old exercises (learn deep before broad)
+  const newExercise = dueExercises.sort(
+    (a, b) => b.stats.length - a.stats.length
+  )[0];
+  exercise.value = newExercise;
+  console.log("GOT NEW EXERCISE, it's", newExercise);
+
+}
+
+function getNextExerciseIntraSession() {
   exercisesInLessonCounter++;
   if (exercisesInLessonCounter > 10) {
     gameMode.value = "undetermined";
@@ -104,7 +132,7 @@ function getNextExercise() {
     const oldDueExercises = possibleExercises.filter(
       (exercise) =>
         exercise.stats.length > 0 &&
-        exercise.sr.dueAt <= Math.floor(new Date().getTime() / 1000)
+        exercise.sr.due <= Math.floor(new Date().getTime() / 1000)
     );
     // in case there are no exercises due, make a popup and return
     if (oldDueExercises.length == 0) {
@@ -114,7 +142,7 @@ function getNextExercise() {
     }
     const randomIndex = Math.floor(Math.random() * 20);
     // pick an old exercise
-    const newExercise = oldDueExercises.sort((a, b) => a.sr.dueAt - b.sr.dueAt)[
+    const newExercise = oldDueExercises.sort((a, b) => a.sr.due - b.sr.due)[
       Math.min(randomIndex, oldDueExercises.length - 1)
     ];
     exercise.value = newExercise;
@@ -161,7 +189,7 @@ function oldDueExercisesCount() {
   return possibleExercises.filter(
     (exercise) =>
       exercise.stats.length > 0 &&
-      exercise.sr.dueAt <= Math.floor(new Date().getTime() / 1000)
+      exercise.sr.due <= Math.floor(new Date().getTime() / 1000)
   ).length;
 }
 
@@ -194,7 +222,20 @@ function userSawExerciseBefore() {
   return exercise.value.stats.length > 0;
 }
 
-async function handleAnswer(rating) {
+async function handleAnswer(ratingValue) {
+  const card = exercise.value.sr;
+  const scheduling_cards = fsrs.repeat(card, new Date());
+  console.log("scheduling_for_card", scheduling_cards);
+  const new_sr_value = scheduling_cards[rating.Easy];
+  // state = card.state
+  console.log("CHECK", new_sr_value);
+  // TODO: how the fuck do I select anything from this, how do I work this 
+  console.log("CHECK 2", new_sr_value.card.due);
+  exercise.value.sr = new_sr_value;
+  console.log("HANDLED ANSWER - updated card", exercise.value);
+}
+
+async function handleAnswerIntraSession(rating) {
   exercisesDoneThisSession.value++;
   lastAnswerWasCorrect.value = rating;
 
@@ -231,8 +272,8 @@ async function handleAnswer(rating) {
     exercise.value.practiceBucket += rating ? 1 : -1;
   }
 
-  // set dueAt to now + interval
-  exercise.value.sr.dueAt =
+  // set due to now + interval
+  exercise.value.sr.due =
     Math.floor(new Date().getTime() / 1000) + exercise.value.sr.interval;
   const statsObj = {
     gameMode: gameMode.value,
@@ -425,7 +466,7 @@ function progress() {
       class="flex gap-2 justify-between w-full items-center"
       v-if="gameMode != 'undetermined'"
     >
-      <div class="flex gap-2 flex-grow items-center">
+      <div class="flex gap-2 flex-grow items-center" v-if="false">
         <small>Progress:</small>
         <progress
           class="flex-grow h-2"
