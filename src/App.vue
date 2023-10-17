@@ -2,7 +2,6 @@
 import { ref, watch, computed, onMounted } from "vue";
 import { supabase } from "./lib/supabaseClient";
 // bar chart
-import BarChart from "./components/BarChart.vue";
 
 import { createToaster } from "@meforma/vue-toaster";
 
@@ -70,6 +69,12 @@ if (localStorage.getItem("exercises")) {
       exercises.push(exercise);
     }
   }
+}
+
+// same stuff with highscores
+let highscores = ref([]);
+if (localStorage.getItem("highscores")) {
+  highscores.value = JSON.parse(localStorage.getItem("highscores"));
 }
 
 function getNextExercise() {
@@ -179,13 +184,46 @@ async function sendDataToBackend(statsObj) {
 }
 
 function setGameMode(mode) {
+  if (mode == gameMode.value) {
+    return;
+  }
   gameMode.value = mode;
-  score.value = 0;
-  exercisesDoneThisSession.value = 0;
   if (mode == "go") {
+    score.value = 0;
+    // reset timer stuff (second may be not necessary)
+    currentTime.value = 0;
+    totalTime.value = 60;
+    streak.value = 0;
+    incorrectAnswerCounter.value = 0;
+    exercisesDoneThisSession.value = 0;
+
     startTimer();
     getNextExercise();
+  } else if (mode == "game-ended") {
+    // toast when new score that made it in the top 10
+    if (
+      sortedHighscores().indexOf(
+        highscores.value[highscores.value.length - 1]
+      ) < 10
+    ) {
+      toaster.success("New Top 10 Score!");
+    }
+    // toast for new personal best
+    if (score.value > highscores.value[0].score) {
+      toaster.success("New Personal Best!");
+    }
+    // save highscore
+    highscores.value.push({
+      score: score.value,
+      date: new Date().toISOString(),
+    });
+    localStorage.setItem("highscores", JSON.stringify(highscores.value));
+    setGameMode("undetermined");
   }
+}
+
+function sortedHighscores() {
+  return highscores.value.sort((a, b) => b.score - a.score);
 }
 
 const isReverseOrder = ref(false);
@@ -228,14 +266,19 @@ function startTimer() {
 function updateTime() {
   if (timerRunning.value) {
     currentTime.value += 1;
-    if (currentTime.value >= totalTime.value) {
-      currentTime.value = 0.0;
-      timerRunning.value = false;
-      gameMode.value = "undetermined";
-    }
   }
 }
 
+// use watcher on timer.value to stop timer when currentTime reaches totalTime
+watch(currentTime, (newVal) => {
+  if (gameMode.value == "go") {
+    if (newVal >= totalTime.value) {
+      timerRunning.value = false;
+      toaster.info("Time's up!");
+      setGameMode("game-ended");
+    }
+  }
+});
 </script>
 
 <template>
@@ -249,9 +292,39 @@ function updateTime() {
           Start Practice Session
         </button>
       </div>
+
+      <div class="">
+        <h2 class="font-bold text-2xl text-center mt-10 mb-4">
+          Personal Highscores
+        </h2>
+        <ol class="list-decimal">
+          <!-- show first 10 highscores -->
+          <li
+            v-for="(highscore, index) in sortedHighscores().slice(0, 10)"
+            :key="index"
+            class="flex gap-4 w-full justify-between"
+          >
+            <span class="font-bold">
+              {{ highscore.score }}
+            </span>
+            <span>
+              <!-- format as 09. Sept 2023, 22:34 -->
+              {{
+                new Date(highscore.date).toLocaleDateString("en-GB", {
+                  day: "2-digit",
+                  month: "short",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
+              }}
+            </span>
+          </li>
+        </ol>
+      </div>
     </div>
 
-    <div class="" v-else>
+    <div class="" v-else-if="gameMode == 'go'">
       <div class="">
         <h2 class="text-2xl font-bold text-center">{{ score }}</h2>
       </div>
@@ -357,16 +430,6 @@ function updateTime() {
         </div>
       </div>
     </div>
-    <article v-if="false">
-      <BarChart
-        class="chart"
-        :data-set="[0, 1]"
-        :margin-left="40"
-        :margin-top="40"
-        :tick-count="5"
-        :bar-padding="0.5"
-      />
-    </article>
   </main>
 
   <footer class="border-t-2 mt-10 w-full p-4 text-sm">
