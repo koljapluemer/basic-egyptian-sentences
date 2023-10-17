@@ -170,6 +170,7 @@ function setGameMode(mode) {
 const isReverseOrder = ref(false);
 
 // add global keypress event listener in mounted:
+// on enter, show next card
 onMounted(() => {
   window.addEventListener("keydown", (e) => {
     if (e.key == "ArrowLeft") {
@@ -181,6 +182,10 @@ onMounted(() => {
     } else if (e.key == "ArrowRight") {
       if (gameMode.value == "go" && !isRevealed.value) {
         handleAnswer(isReverseOrder.value);
+      }
+    } else if (e.key == "Enter") {
+      if (gameMode.value == "go" && isRevealed.value) {
+        getNextExercise();
       }
     }
   });
