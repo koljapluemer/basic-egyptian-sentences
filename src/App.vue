@@ -209,8 +209,12 @@ function setGameMode(mode) {
       toaster.success("New Top 10 Score!");
     }
     // toast for new personal best
-    if (score.value > highscores.value[0].score) {
+    if (highscores.value.length == 0) {
       toaster.success("New Personal Best!");
+    } else {
+      if (score.value > highscores.value[0].score) {
+        toaster.success("New Personal Best!");
+      }
     }
     // save highscore
     highscores.value.push({
