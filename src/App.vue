@@ -3,11 +3,6 @@ import { ref, watch, computed } from "vue";
 import { supabase } from "./lib/supabaseClient";
 // bar chart
 import BarChart from "./components/BarChart.vue";
-import * as fsrsJs from "fsrs.js";
-
-
-const studyMSA = ref(true);
-const studyEgyptian = ref(true);
 
 const exercise = ref(null);
 const exercisesDoneThisSession = ref(0);
@@ -20,12 +15,6 @@ const lastAnswerWasCorrect = ref(false);
 const gameMode = ref("undetermined");
 const currentlyPracticedSentence = ref(null);
 let exercisesInLessonCounter = 0;
-
-
-let fsrs = new fsrsJs.FSRS;
-let rating= fsrsJs.Rating;
-let state = fsrsJs.State;
-
 
 // if uid is not in localStorage, create one and save
 let uid;
@@ -40,243 +29,89 @@ if (localStorage.getItem("uid")) {
 import data from "./clozes.json";
 
 for (const exercise of data["exercises"]) {
-  exercise.sr = new fsrsJs.Card;
+  exercise.sr = {
+    repetitions: 0,
+    interval: 10,
+    due: Math.floor(new Date().getTime() / 1000),
+  };
   exercise.practiceBucket = 0;
   exercise.stats = [];
   exercises.push(exercise);
 }
-  console.log("exercises", exercises);
-
+console.log("exercises", exercises);
 
 // TODObut, implement: new exercises should be included, and deleted should be deleted
-// if (localStorage.getItem("exercises")) {
-//   const exercisesFromStore = JSON.parse(localStorage.getItem("exercises"));
-//   const exercisesFromJSON = exercises;
-//   exercises = exercisesFromStore;
-//   // if there are new exercises in the JSON (in case backend got updated), add them to the exercises array
-//   // find match by 'sentence_en' property
-//   for (const exercise of exercisesFromJSON) {
-//     if (
-//       !exercisesFromStore
-//         .map((e) => e.sentence_en)
-//         .includes(exercise.sentence_en)
-//     ) {
-//       console.log("adding new exercise", exercise);
-//       exercises.push(exercise);
-//     }
-//   }
-// }
-
-function setGameMode(mode) {
-  exercisesInLessonCounter = 0;
-  gameMode.value = mode;
-  if (mode == "practice") {
-    practiceExercisesDoneThisSession.value = 0;
-    getNextExercise();
-  } else if (mode == "new") {
-    // find a random exercise that has not been practiced yet (stats length 0)
-    const newExercise = exercises.filter(
-      (exercise) => exercise.stats.length == 0
-    )[Math.floor(Math.random() * exercises.length)];
-    currentlyPracticedSentence.value = newExercise.sentence_en;
-    getNextExercise();
+if (localStorage.getItem("exercises")) {
+  const exercisesFromStore = JSON.parse(localStorage.getItem("exercises"));
+  const exercisesFromJSON = exercises;
+  exercises = exercisesFromStore;
+  // if there are new exercises in the JSON (in case backend got updated), add them to the exercises array
+  // find match by 'sentence_en' property
+  for (const exercise of exercisesFromJSON) {
+    if (
+      !exercisesFromStore
+        .map((e) => e.sentence_en)
+        .includes(exercise.sentence_en)
+    ) {
+      console.log("adding new exercise", exercise);
+      exercises.push(exercise);
+    }
   }
 }
 
 function getNextExercise() {
-  isRevealed.value = false;
-  // get all exercises where exercise.sr.due is in the past
-  // if there are no exercises due, make a popup and return
-  const dueExercises = exercises.filter(
-    (exercise) =>
-      exercise.sr.due <= new Date() 
-  );
-  console.log("dueExercises:", dueExercises.length, "data:", dueExercises);
-  if (dueExercises.length == 0) {
-    alert("You have nothing left to do right now! Come back later!");
-    return;
-  }
-  // sort due exercises by number of stats, and get the one with the most stats
-  // this way, we're preferring old exercises (learn deep before broad)
-  const newExercise = dueExercises.sort(
-    (a, b) => b.stats.length - a.stats.length
-  )[0];
-  exercise.value = newExercise;
-  console.log("GOT NEW EXERCISE, it's", newExercise);
-
-}
-
-function getNextExerciseIntraSession() {
   exercisesInLessonCounter++;
-  if (exercisesInLessonCounter > 10) {
-    gameMode.value = "undetermined";
+
+  isRevealed.value = false;
+  let possibleExercises = exercises.filter(
+    (exercise) => exercise.sr.due <= Math.floor(new Date().getTime() / 1000)
+  );
+  if (possibleExercises.length == 0) {
+    alert("You have absolutely nothing to practice right now. Good job.");
     return;
   }
-  isRevealed.value = false;
-  let possibleExercises = exercises;
-
-  // filter out exercises that are not in the currently selected dialects
-  if (!studyMSA.value) {
-    possibleExercises = possibleExercises.filter(
-      (exercise) => exercise.dialect != "MSA"
-    );
-  }
-  if (!studyEgyptian.value) {
-    possibleExercises = possibleExercises.filter(
-      (exercise) => exercise.dialect != "Egyptian"
-    );
-  }
-
-  if (gameMode.value == "practice") {
-    // also check if parent number is due (or due is null)
-    const oldDueExercises = possibleExercises.filter(
-      (exercise) =>
-        exercise.stats.length > 0 &&
-        exercise.sr.due <= Math.floor(new Date().getTime() / 1000)
-    );
-    // in case there are no exercises due, make a popup and return
-    if (oldDueExercises.length == 0) {
-      alert("You have nothing left to do right now! Come back later!");
-      gameMode.value = "undetermined";
-      return;
-    }
-    const randomIndex = Math.floor(Math.random() * 20);
-    // pick an old exercise
-    const newExercise = oldDueExercises.sort((a, b) => a.sr.due - b.sr.due)[
-      Math.min(randomIndex, oldDueExercises.length - 1)
-    ];
-    exercise.value = newExercise;
-  } else if (gameMode.value == "new") {
-    // find an exercise with the currently practiced sentence with a practiceBucket value of less than 3
-    // also make sure its not the same twice in a row (except if there is only one exercise left)
-    possibleExercises = possibleExercises.filter(
-      (possibleExercise) =>
-        possibleExercise.sentence_en == currentlyPracticedSentence.value &&
-        possibleExercise.practiceBucket < 3
-    );
-    // this has to be in two steps because we need to refer to the length of the initially filtered array
-    if (possibleExercises.length > 1) {
-      possibleExercises = possibleExercises.filter(
-        (possibleExercise) => possibleExercise != exercise.value
-      );
-    }
-
-    // if there are no exercises left, reset gameMode
-    if (possibleExercises.length == 0) {
-      gameMode.value = "undetermined";
-      return;
-    }
-    // pick a random exercise from the possible exercises
-    const newExercise =
-      possibleExercises[Math.floor(Math.random() * possibleExercises.length)];
-    exercise.value = newExercise;
-  }
-}
-
-// compute how many old due exercises there are rn
-function oldDueExercisesCount() {
-  let possibleExercises = exercises;
-  if (!studyMSA.value) {
-    possibleExercises = possibleExercises.filter(
-      (exercise) => exercise.dialect != "MSA"
-    );
-  }
-  if (!studyEgyptian.value) {
-    possibleExercises = possibleExercises.filter(
-      (exercise) => exercise.dialect != "Egyptian"
-    );
-  }
-  return possibleExercises.filter(
-    (exercise) =>
-      exercise.stats.length > 0 &&
-      exercise.sr.due <= Math.floor(new Date().getTime() / 1000)
-  ).length;
-}
-
-// function to change how many distinct main sentences (NOT exercises) have never been practiced
-function newSentencesCount() {
-  let NewMainSentenceArray = [];
-  let possibleExercises = exercises;
-  if (!studyMSA.value) {
-    possibleExercises = possibleExercises.filter(
-      (exercise) => exercise.dialect != "MSA"
-    );
-  }
-  if (!studyEgyptian.value) {
-    possibleExercises = possibleExercises.filter(
-      (exercise) => exercise.dialect != "Egyptian"
-    );
-  }
-  for (const exercise of possibleExercises) {
-    if (
-      exercise.stats.length == 0 &&
-      !NewMainSentenceArray.includes(exercise.sentence_en)
-    ) {
-      NewMainSentenceArray.push(exercise.sentence_en);
-    }
-  }
-  return NewMainSentenceArray.length;
+  exercise.value = possibleExercises[
+    Math.floor(Math.random() * possibleExercises.length)
+  ];
 }
 
 function userSawExerciseBefore() {
   return exercise.value.stats.length > 0;
 }
-
-async function handleAnswer(ratingValue) {
-  const card = exercise.value.sr;
-  const scheduling_cards = fsrs.repeat(card, new Date());
-  console.log("scheduling_for_card", scheduling_cards);
-  const new_sr_value = scheduling_cards[rating.Easy];
-  // state = card.state
-  console.log("CHECK", new_sr_value);
-  // TODO: how the fuck do I select anything from this, how do I work this 
-  console.log("CHECK 2", new_sr_value.card.due);
-  exercise.value.sr = new_sr_value;
-  console.log("HANDLED ANSWER - updated card", exercise.value);
-}
-
-async function handleAnswerIntraSession(rating) {
+async function handleAnswer(rating) {
   exercisesDoneThisSession.value++;
   lastAnswerWasCorrect.value = rating;
 
-  if (gameMode.value == "practice") {
-    practiceExercisesDoneThisSession.value++;
-    // if we're in practice mode, we're doing the usual naive SR
+  // Usual naive SR
+  // if answer correct, double interval, if incorrect, half interval (minimum 10)
+  if (rating) {
+    streak.value++;
 
-    // if answer correct, double interval, if incorrect, half interval (minimum 10)
-    if (rating) {
-      streak.value++;
-
-      exercise.value.sr.repetitions++;
-      exercise.value.sr.interval =
-        exercise.value.sr.interval * 2 * exercise.value.sr.repetitions;
-      // if the repetition before this one was more than 16h ago, set the interval to at least 16h
-      if (
-        exercise.value.stats.length > 1 &&
-        exercise.value.stats[exercise.value.stats.length - 2].timestamp <
-          Math.floor(new Date().getTime() / 1000) - 16 * 60 * 60
-      ) {
-        exercise.value.sr.interval = Math.max(
-          exercise.value.sr.interval,
-          16 * 60 * 60
-        );
-      }
-    } else {
-      streak.value = 0;
-
-      exercise.value.sr.repetitions = 0;
-      // divide level by 2 and round down
+    exercise.value.sr.repetitions++;
+    exercise.value.sr.interval =
+      exercise.value.sr.interval * 2 * exercise.value.sr.repetitions;
+    // if the repetition before this one was more than 16h ago, set the interval to at least 16h
+    if (
+      exercise.value.stats.length > 1 &&
+      exercise.value.stats[exercise.value.stats.length - 2].timestamp <
+        Math.floor(new Date().getTime() / 1000) - 16 * 60 * 60
+    ) {
+      exercise.value.sr.interval = Math.max(
+        exercise.value.sr.interval,
+        16 * 60 * 60
+      );
     }
-  } else if (gameMode.value == "new") {
-    // add one to practiceBucket if correct, otherwise set minus one
-    exercise.value.practiceBucket += rating ? 1 : -1;
+  } else {
+    streak.value = 0;
+
+    exercise.value.sr.repetitions = 0;
+    // divide level by 2 and round down
   }
 
   // set due to now + interval
   exercise.value.sr.due =
     Math.floor(new Date().getTime() / 1000) + exercise.value.sr.interval;
   const statsObj = {
-    gameMode: gameMode.value,
     guessWasCorrect: rating,
     timestamp: Math.floor(new Date().getTime() / 1000),
     exercise: exercise.question,
@@ -300,62 +135,25 @@ async function handleAnswerIntraSession(rating) {
   }
 }
 
-function progress() {
-  if (gameMode.value == "new") {
-    console.log("new");
-    // add the all the practiceBuckets of the currently practiced sentence
-    const practiceBuckets = exercises
-      .filter(
-        (exercise) => exercise.sentence_en == currentlyPracticedSentence.value
-      )
-      .map((exercise) => exercise.practiceBucket);
-    return {
-      current:
-        practiceBuckets.reduce((a, b) => a + b, 0) / practiceBuckets.length,
-      total:
-        exercises.filter(
-          (exercise) => exercise.sentence_en == currentlyPracticedSentence.value
-        ).length * 3,
-    };
-  } else if (gameMode.value == "practice") {
-    console.log("practice");
-    return {
-      current: practiceExercisesDoneThisSession.value,
-      total: oldDueExercisesCount() + practiceExercisesDoneThisSession.value,
-    };
-  }
-  return {};
+function setGameMode(mode) {
+  gameMode.value = mode;
+  exercisesDoneThisSession.value = 0;
+  console.log("gameMode", gameMode.value);
+  getNextExercise();
 }
+
 </script>
 
 <template>
   <main class="p-2 flex flex-col items-center flex-grow justify-center">
     <div v-if="gameMode == 'undetermined'">
-      <h2 class="text-4xl font-bold my-20">
-        <span v-if="exercisesDoneThisSession > 0">
-          Choose what to do next:
-        </span>
-        <span v-else>
-          Welcome to Arabic Basic Sentences Practice. <br />
-          Choose what to do first:
-        </span>
-      </h2>
       <div class="flex gap-2 flex-wrap justify-center">
+      
         <button
-          class="btn btn-success flex flex-grow flex-col"
-          @click="setGameMode('practice')"
-          :class="oldDueExercisesCount() > 0 ? 'btn-success' : 'btn-disabled'"
+          class="btn btn-primary flex-grow flex flex-col btn-primary"
+          @click="setGameMode('go')"
         >
-          Practice Previous Exercises
-          <small> ({{ oldDueExercisesCount() }} due) </small>
-        </button>
-        <button
-          class="btn btn-primary flex-grow flex flex-col"
-          @click="setGameMode('new')"
-          :class="newSentencesCount() > 0 ? 'btn-primary' : 'btn-disabled'"
-        >
-          Learn New Sentence
-          <small> ({{ newSentencesCount() }} left) </small>
+          Start Practice Session
         </button>
       </div>
     </div>
@@ -400,9 +198,7 @@ function progress() {
             v-else-if="exercise.sentence_en.length % 4 == 3"
           />
 
-          <small class="uppercase">
-            {{ exercise.dialect }}
-          </small>
+  
         </div>
 
         <div class="chat chat-start flex-grow w-full">
@@ -417,7 +213,10 @@ function progress() {
                 : 'chat-bubble-primary'
             "
           >
-            <small class="mb-4" v-if="isRevealed">{{ exercise.transliteration }}</small> <br >
+            <small class="mb-4" v-if="isRevealed">{{
+              exercise.transliteration
+            }}</small>
+            <br />
 
             <span class="text-3xl" v-if="!isRevealed">
               {{ exercise.question }}
@@ -427,7 +226,6 @@ function progress() {
             </span>
             <br />
             <small> ({{ exercise.sentence_en }}) </small>
-         
           </div>
         </div>
       </div>
@@ -462,29 +260,6 @@ function progress() {
         <button class="btn" @click="getNextExercise">Show Next</button>
       </div>
     </div>
-    <div
-      class="flex gap-2 justify-between w-full items-center"
-      v-if="gameMode != 'undetermined'"
-    >
-      <div class="flex gap-2 flex-grow items-center" v-if="false">
-        <small>Progress:</small>
-        <progress
-          class="flex-grow h-2"
-          :value="progress().current"
-          :max="progress().total"
-        >
-          {{ progress().current }} / {{ progress().total }}
-        </progress>
-      </div>
-      <button
-        class="btn btn-small"
-        @click="gameMode = 'undetermined'"
-        v-if="gameMode != 'undetermined'"
-      >
-        Exit Lesson
-      </button>
-    </div>
-
     <article v-if="false">
       <BarChart
         class="chart"
@@ -498,31 +273,6 @@ function progress() {
   </main>
 
   <footer class="border-t-2 mt-10 w-full p-4 text-sm">
-    <!-- red background when nothing is selected -->
-    <div
-    v-if="false"
-      class="mb-4"
-      :class="studyMSA || studyEgyptian ? '' : 'bg-red-700 text-white'"
-    >
-      <fieldset class="flex gap-2 px-2">
-        <input
-          type="checkbox"
-          id="check-msa"
-          v-model="studyMSA"
-          class="form-checkbox"
-        />
-        <label for="check-msa">Include MSA Sentences</label>
-      </fieldset>
-      <fieldset class="flex gap-2 px-2">
-        <input
-          type="checkbox"
-          id="check-msa"
-          v-model="studyEgyptian"
-          class="form-checkbox"
-        />
-        <label for="check-msa">Include Egyptian Sentences</label>
-      </fieldset>
-    </div>
     <ul class="flex flex-col gap-2">
       <li>
         Made by
