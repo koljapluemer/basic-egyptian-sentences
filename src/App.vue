@@ -69,6 +69,25 @@ if (localStorage.getItem("exercises")) {
       exercises.push(exercise);
     }
   }
+  // if exercises were deleted from the JSON, delete them from the exercises array (check sentence_en, sentence_ar, and question)
+  for (const exercise of exercisesFromStore) {
+    if (
+      !exercisesFromJSON
+        .map((e) => e.sentence_en)
+        .includes(exercise.sentence_en) ||
+      !exercisesFromJSON
+        .map((e) => e.sentence_ar)
+        .includes(exercise.sentence_ar) ||
+      !exercisesFromJSON
+        .map((e) => e.question)
+        .includes(exercise.question)
+    ) {
+      exercises.splice(
+        exercises.findIndex((e) => e.sentence_en == exercise.sentence_en),
+        1
+      );
+    }
+  }
 }
 
 // same stuff with highscores
