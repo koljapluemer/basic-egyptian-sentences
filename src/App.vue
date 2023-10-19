@@ -464,7 +464,6 @@ function updateTime() {
   </main>
 
   <footer class="border-t-2 mt-10 w-full p-4 text-sm">
-
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
@@ -500,13 +499,27 @@ function updateTime() {
 
     <ul class="flex flex-col gap-2">
       <li>
+        Thanks to all the friends who provided content & feedback. Furthermore, I
+        used the following sources for inspiration and exercise templates:
+        <a
+          href="https://discoverdiscomfort.com/colloquial-egyptian-arabic-phrases/"
+          >[0]</a
+        >
+        <a
+          href="https://storylearning.com/learn/arabic/arabic-tips/arabic-phrases"
+          >[1]</a
+        >
+        <a href="https://talkinarabic.com/egyptian/arabic-phrases/">[2]</a>
+      </li>
+      <li>
         Made by
         <a class="underline" href="hello@koljapluemer.com">Kolja Sam Pluemer</a
         >.
       </li>
       <li>
         Pseudonymous learning is transmitted to improve the app. No personal
-        data leaves your device.
+        data leaves your device. Cookies are used to store your progress, but
+        they are not of the privacy-invading sort.
       </li>
       <li>
         you may also enjoy:
@@ -514,6 +527,10 @@ function updateTime() {
           class="underline"
           href="https://arabic-pronounciation.koljapluemer.com/"
           >Arabic Pronunciation Tutor (WIP)</a
+        >
+        &
+        <a class="underline" href="https://arabic-numbers.koljapluemer.com/"
+          >Arabic Number Practice</a
         >.
       </li>
       <li>
