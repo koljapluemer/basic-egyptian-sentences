@@ -1,3 +1,7 @@
 # Basic Arabic Sentences Tutor
 
-A quick 101 for studying at AUC and living in New Cairo. 
+Practice essential Egyptian Arabic phrases. 
+
+## User Stories
+
+- [] As a learner, I want to memorize relevant phrases to get by in Egypt in an efficient and fun way.

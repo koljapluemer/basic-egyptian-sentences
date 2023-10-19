@@ -78,9 +78,7 @@ if (localStorage.getItem("exercises")) {
       !exercisesFromJSON
         .map((e) => e.sentence_ar)
         .includes(exercise.sentence_ar) ||
-      !exercisesFromJSON
-        .map((e) => e.question)
-        .includes(exercise.question)
+      !exercisesFromJSON.map((e) => e.question).includes(exercise.question)
     ) {
       exercises.splice(
         exercises.findIndex((e) => e.sentence_en == exercise.sentence_en),
@@ -97,6 +95,14 @@ if (localStorage.getItem("highscores")) {
 }
 
 function getNextExercise() {
+  // check if time is left on the timer
+  if (currentTime.value >= totalTime.value) {
+    timerRunning.value = false;
+    toaster.info("Time's up!");
+    setGameMode("game-ended");
+    return;
+  }
+
   clearTimeout(timeoutId.value);
   isReverseOrder.value = Math.random() < 0.5;
   exercisesInLessonCounter++;
@@ -291,17 +297,6 @@ function updateTime() {
     currentTime.value += 1;
   }
 }
-
-// use watcher on timer.value to stop timer when currentTime reaches totalTime
-watch(currentTime, (newVal) => {
-  if (gameMode.value == "go") {
-    if (newVal >= totalTime.value) {
-      timerRunning.value = false;
-      toaster.info("Time's up!");
-      setGameMode("game-ended");
-    }
-  }
-});
 </script>
 
 <template>
