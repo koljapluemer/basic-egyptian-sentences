@@ -58,8 +58,8 @@ import Game from "./components/Game.vue";
       </li>
       <li>
         Made by
-        <a class="underline" href="hello@koljapluemer.com">Kolja Sam Pluemer</a
-        >.
+        <a class="underline" href="https://koljapluemer.com/">Kolja Sam Pluemer</a
+        >. <a href="mailto:feedback@koljapluemer.com" class="underline">Mail me your feedback!</a>  
       </li>
       <li>
         Pseudonymous learning is transmitted to improve the app. No personal

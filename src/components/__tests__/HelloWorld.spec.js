@@ -1,11 +1,12 @@
 import { describe, it, expect } from 'vitest'
 
 import { mount } from '@vue/test-utils'
-import HelloWorld from '../HelloWorld.vue'
+import Game from '../Game.vue'
 
-describe('HelloWorld', () => {
+// check if Game mounting successful (exists)
+describe('Game component loads', () => {
   it('renders properly', () => {
-    const wrapper = mount(HelloWorld, { props: { msg: 'Hello Vitest' } })
-    expect(wrapper.text()).toContain('Hello Vitest')
+    const wrapper = mount(Game)
+    expect(wrapper.text()).toContain('Start Practice Session')
   })
 })
