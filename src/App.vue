@@ -27,6 +27,7 @@ const countingDown = ref(false);
 const countdown = ref(3);
 
 const score = ref(0);
+const lastScore = ref(null);
 
 const timeoutId = ref(null);
 
@@ -95,6 +96,7 @@ if (localStorage.getItem("highscores")) {
 }
 
 function getNextExercise() {
+  clearTimeout(timeoutId.value);
   // check if time is left on the timer
   if (currentTime.value >= totalTime.value) {
     timerRunning.value = false;
@@ -103,7 +105,6 @@ function getNextExercise() {
     return;
   }
 
-  clearTimeout(timeoutId.value);
   isReverseOrder.value = Math.random() < 0.5;
   exercisesInLessonCounter++;
 
@@ -225,13 +226,14 @@ function setGameMode(mode) {
     startTimer();
     getNextExercise();
   } else if (mode == "game-ended") {
-    // toast when new score that made it in the top 10
-    if (
-      sortedHighscores().indexOf(
-        highscores.value[highscores.value.length - 1]
-      ) < 10
-    ) {
-      toaster.success("New Top 10 Score!");
+    lastScore.value = score.value;
+    // toast when score is higher than 10th entry in highscores
+    if (highscores.value.length < 10) {
+      toaster.success("New Top 10 Entry!");
+    } else {
+      if (score.value > highscores.value[9].score) {
+        toaster.success("New Top 10 Entry!");
+      }
     }
     // toast for new personal best
     if (highscores.value.length == 0) {
@@ -272,6 +274,10 @@ onMounted(() => {
     } else if (e.key == "Enter") {
       if (gameMode.value == "go" && isRevealed.value) {
         getNextExercise();
+        return;
+      }
+      if (gameMode.value == "undetermined") {
+        setGameMode("go");
       }
     }
   });
@@ -312,6 +318,9 @@ function updateTime() {
       </div>
 
       <div class="">
+        <h2 class="font-bold text-3xl text-center mt-5" v-if="lastScore">
+          You scored: {{ lastScore }} points.
+        </h2>
         <h2 class="font-bold text-2xl text-center mt-10 mb-4">
           Personal Highscores
         </h2>

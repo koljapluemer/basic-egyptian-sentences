@@ -1,11 +1,11 @@
 ## Must
 
-- highscore still added twice?!
 
 ## Should 
 
 - game end transition missing, there needs to be something
 - show score after game
+- communicate that you can use keys
 
 ## Could 
 
