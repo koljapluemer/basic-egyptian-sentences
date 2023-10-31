@@ -217,6 +217,7 @@ function setGameMode(mode) {
     totalTime.value = 60;
     streak.value = 0;
     incorrectAnswerCounter.value = 0;
+    console.log('reset incorrectAnswerCounter')
     exercisesDoneThisSession.value = 0;
 
     startTimer();
