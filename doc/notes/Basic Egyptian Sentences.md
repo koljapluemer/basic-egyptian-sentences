@@ -1,3 +1,8 @@
+---
+aliases: 
+created-at: 12.03.2024
+q-type: 
+---
 ### General
 
 #### [[SR]]

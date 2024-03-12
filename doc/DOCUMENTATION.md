@@ -1,10 +1,5 @@
-### Lessons Learned
+- A basic `Vue` app; all important logic is in `Game.vue` and `App.vue`.
 
-- this one automatically goes to the next item after a while (*or* when pressing `Show Next`)
-	- I think this is based on feedback for [[Map Practice]]
+### Misc
 
-### Marketing 
-
-- <https://old.reddit.com/r/learn_arabic/comments/17bp76k/im_building_a_web_game_to_practice_basic_egyptian/>
-- <https://twitter.com/koljapluemer/status/1715038565309063444>
-- also shared on *Midnight Coding Club* [[Discord]] and *[[dev.to]]*
+- The background image was compressed with `jpegoptim --size=800k`

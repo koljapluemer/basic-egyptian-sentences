@@ -7,7 +7,7 @@ import Game from "./components/Game.vue";
     <Game />
   </main>
 
-  <footer class="border-t-2 mt-10 w-full p-4 text-sm">
+  <footer class="border-t-2 mt-10 w-full p-4 text-sm glass">
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
@@ -90,3 +90,10 @@ import Game from "./components/Game.vue";
     </ul>
   </footer>
 </template>
+
+<style>
+body {
+  background-image: url("@/assets/b1.jpg");
+  background-size: cover;
+}
+</style>

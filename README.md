@@ -2,6 +2,8 @@
 
 ![Project Image](/doc/img/project.png)
 
+
+
 Practice essential Egyptian Arabic phrases. 
 
 ## User Stories
@@ -24,7 +26,17 @@ npm run dev
 
 If you have any questions, problems or bugs to report, kindly open an issue. Cheerz!
 
+## Credit
+
+- Background image by [Omar Elsharawy](https://unsplash.com/@esh3rwy?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash")
+- Tech Stack: `Vue`, `Tailwind`, `DaisyUI`.
+  
+
 ## Gallery
 
+
+
 ![Screenshot of Basic-Egyptian-Sentences](/doc/img/gallery/s1.png)
+
+
 ![Screenshot of Basic-Egyptian-Sentences](/doc/img/gallery/s2.png)
