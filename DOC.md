@@ -1,1 +1,0 @@
-Simple Vue project, copied from the Arabic Number Practice.

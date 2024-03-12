@@ -1,5 +1,6 @@
 ## Must
 
+- bring back highscore logging
 
 ## Should 
 
