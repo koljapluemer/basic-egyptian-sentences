@@ -9,4 +9,5 @@
 
 ## Could 
 
-- give a more fine-grained access control to supabase
+- reimplement supabase or simple anonymous data logging anyways
+

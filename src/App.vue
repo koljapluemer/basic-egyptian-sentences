@@ -4,8 +4,7 @@ import Game from "./components/Game.vue";
 
 <template>
   <main class="p-2 flex flex-col items-center flex-grow justify-center">
-
-  <Game />
+    <Game />
   </main>
 
   <footer class="border-t-2 mt-10 w-full p-4 text-sm">
@@ -44,8 +43,8 @@ import Game from "./components/Game.vue";
 
     <ul class="flex flex-col gap-2">
       <li>
-        Thanks to all the friends who provided content & feedback. Furthermore, I
-        used the following sources for inspiration and exercise templates:
+        Thanks to all the friends who provided content & feedback. Furthermore,
+        I used the following sources for inspiration and exercise templates:
         <a
           href="https://discoverdiscomfort.com/colloquial-egyptian-arabic-phrases/"
           >[0]</a
@@ -58,8 +57,12 @@ import Game from "./components/Game.vue";
       </li>
       <li>
         Made by
-        <a class="underline" href="https://koljapluemer.com/">Kolja Sam Pluemer</a
-        >. <a href="mailto:feedback@koljapluemer.com" class="underline">Mail me your feedback!</a>  
+        <a class="underline" href="https://koljapluemer.com/"
+          >Kolja Sam Pluemer</a
+        >.
+        <a href="mailto:feedback@koljapluemer.com" class="underline"
+          >Mail me your feedback!</a
+        >
       </li>
       <li>
         Pseudonymous learning is transmitted to improve the app. No personal

@@ -1,6 +1,5 @@
 <script setup>
 import { ref, watch, computed, onMounted } from "vue";
-import { supabase } from "@/lib/supabaseClient";
 import { createToaster } from "@meforma/vue-toaster";
 
 const toaster = createToaster({
@@ -187,23 +186,9 @@ function handleAnswer(rating) {
   exercise.value.stats.push(statsObj);
   // save the sentencesBank and exercises to localStorage
   localStorage.setItem("exercises", JSON.stringify(exercises));
-  sendDataToBackend(statsObj);
 }
 
-async function sendDataToBackend(statsObj) {
-  try {
-    const { data, error } = await supabase
-      .from("learning_data_cloze_sentences")
-      .insert([
-        {
-          user_uid: uid,
-          learning_result: JSON.stringify(statsObj),
-        },
-      ]);
-  } catch (error) {
-    console.error(error);
-  }
-}
+
 
 function setGameMode(mode) {
   if (mode == gameMode.value) {
