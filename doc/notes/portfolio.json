@@ -1,0 +1,27 @@
+{
+  "title": "Basic Egyptian Sentences",
+  "subtitle": "A timed Spaced Repetition web game about Cairo survival Arabic",
+  "image": "blog/sentences.png",
+  "imageAltProperty": "Screenshot of the project",
+  "shownAboveFold": false,
+  "status": "mvp",
+  "showOnPortfolio": true,
+  "languages": "en, eg",
+  "links": [
+    {
+      "title": "Play Game",
+      "url": "https://basic-arabic-sentences.koljapluemer.com/"
+    },
+    {
+      "title": "GitHub",
+      "url": "https://github.com/koljapluemer/basic-arabic-sentences/tree/main"
+    },
+    {
+      "title": "Show HN",
+      "url": "https://news.ycombinator.com/item?id=37944912"
+    }
+  ]
+}
+
+
+

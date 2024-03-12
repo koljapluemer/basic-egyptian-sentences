@@ -1,14 +1,13 @@
-# Basic Arabic Sentences Tutor
+# Basic Egyptian Sentences Game
+
+![Project Image](/doc/img/project.png)
 
 Practice essential Egyptian Arabic phrases. 
-
-![Screenshot of the app](app_screenshot.png)
 
 ## User Stories
 
 - [x] As a learner, I want to memorize relevant phrases to get by in Egypt in an efficient and fun way.
 - [x] As the programmer, I want to learn more about how sentence learning works best
-
 
 ## About
 
@@ -24,3 +23,8 @@ npm run dev
 ```
 
 If you have any questions, problems or bugs to report, kindly open an issue. Cheerz!
+
+## Gallery
+
+![Screenshot of Basic-Egyptian-Sentences](/doc/img/gallery/s1.png)
+![Screenshot of Basic-Egyptian-Sentences](/doc/img/gallery/s2.png)
