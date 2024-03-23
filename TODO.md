@@ -1,7 +1,3 @@
-## Must
-
-- bring back highscore logging
-
 ## Should 
 
 - prevent time running faster in some cases (??)

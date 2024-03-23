@@ -274,6 +274,7 @@ const progressStyle = computed(() => ({
 
 function startTimer() {
   timerRunning.value = true;
+  clearInterval(timer.value);
   timer.value = setInterval(updateTime, 1000);
 }
 

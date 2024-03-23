@@ -3,7 +3,7 @@
   "subtitle": "A timed Spaced Repetition web game about Cairo survival Arabic",
   "image": "blog/sentences.png",
   "imageAltProperty": "Screenshot of the project",
-  "shownAboveFold": false,
+  "showAboveFold": false,
   "status": "mvp",
   "showOnPortfolio": true,
   "languages": "en, eg",

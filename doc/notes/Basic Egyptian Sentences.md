@@ -1,10 +1,12 @@
 ---
 aliases: 
+  - What makes a time-pressure game fun?
 created-at: 12.03.2024
 q-type: 
 ---
 ### General
 
+- [[blog backend]] for [[Blog/2023-10-19-basic-arabic-sentences|2023-10-19-basic-arabic-sentences]]
 #### [[SR]]
 
 - here I opted for always showing two possible answers for the [[Cloze Deletion]], one right, one wrong
