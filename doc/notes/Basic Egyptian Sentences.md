@@ -9,7 +9,7 @@ q-type:
 - [[blog backend]] for [[Blog/2023-10-19-basic-arabic-sentences|2023-10-19-basic-arabic-sentences]]
 #### [[SR]]
 
-- here I opted for always showing two possible answers for the [[Cloze Deletion]], one right, one wrong
+- here I opted for always showing two possible answers for the [[cloze deletion]], one right, one wrong
     - ...and the wrong one was selected to have small string distance to the correct one
 	    - → [[~ if you force interfering learning items into context, does that help encoding﹖]]
 
