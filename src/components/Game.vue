@@ -294,6 +294,10 @@ function updateTime() {
           Practice your survival Arabic and get ready for Egypt.
         </h2>
         <p>Each round takes about a minute, depending on how good you are.</p>
+        <select class="input select mt-10" name="dataset-select" id="">
+          <option value="survival">Survival Sentences</option>
+          <option value="expressions">Expressions</option>
+        </select>
         <button
           class="btn btn-primary flex-grow flex flex-col btn-primary"
           @click="setGameMode('go')"
