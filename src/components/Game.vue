@@ -267,6 +267,8 @@ const currentTime = ref(0.0); // Current time in seconds
 const timerRunning = ref(false);
 const timer = ref(null);
 
+const dataSet = ref('survival');
+
 const remainingTime = computed(() => totalTime.value - currentTime.value);
 const progressStyle = computed(() => ({
   width: `${(1 - currentTime.value / totalTime.value) * 100}%`,
@@ -294,7 +296,7 @@ function updateTime() {
           Practice your survival Arabic and get ready for Egypt.
         </h2>
         <p>Each round takes about a minute, depending on how good you are.</p>
-        <select class="input select mt-10" name="dataset-select" id="">
+        <select class="input select mt-10" name="dataset-select" id="" v-model="dataSet">
           <option value="survival">Survival Sentences</option>
           <option value="expressions">Expressions</option>
         </select>
