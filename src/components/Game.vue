@@ -450,8 +450,14 @@ function updateTime() {
           </button>
         </div>
       </div>
+      <p class="p-4">
+        The sentences are sourced from <a target="_blank" class="underline" href="https://eu.lisaanmasry.org/online/example.php">lisaanmasry.org</a>. This material is Copyright © 2007-2020 Mike Green.
+      </p>
     </div>
+    
   </div>
+
+ 
 </template>
 
 <style scoped>
