@@ -37,7 +37,8 @@ if (localStorage.getItem("uid")) {
 
 // EXERCISES IMPORTER FROM BACKEND
 let exercises = [];
-import data from "@/clozes.json";
+import data from "@/clozes_lisaan.json";
+// import phrases_data from "@/clozes_phrases.json";
 
 for (const exercise of data["exercises"]) {
   exercise.sr = {
@@ -296,10 +297,6 @@ function updateTime() {
           Practice your survival Arabic and get ready for Egypt.
         </h2>
         <p>Each round takes about a minute, depending on how good you are.</p>
-        <select class="input select mt-10" name="dataset-select" id="" v-model="dataSet">
-          <option value="survival">Survival Sentences</option>
-          <option value="expressions">Expressions</option>
-        </select>
         <button
           class="btn btn-primary flex-grow flex flex-col btn-primary"
           @click="setGameMode('go')"
