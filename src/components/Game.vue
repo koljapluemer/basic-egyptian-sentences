@@ -37,7 +37,7 @@ if (localStorage.getItem("uid")) {
 
 // EXERCISES IMPORTER FROM BACKEND
 let exercises = [];
-import data from "@/clozes_lisaan.json";
+import data from "@/clozes_phrases_filtered.json";
 // import phrases_data from "@/clozes_phrases.json";
 
 for (const exercise of data["exercises"]) {
@@ -198,7 +198,7 @@ function setGameMode(mode) {
     score.value = 0;
     // reset timer stuff (second may be not necessary)
     currentTime.value = 0;
-    totalTime.value = 60;
+    totalTime.value = 600;
     streak.value = 0;
     incorrectAnswerCounter.value = 0;
     console.log("reset incorrectAnswerCounter");
@@ -263,7 +263,7 @@ onMounted(() => {
   });
 });
 
-const totalTime = ref(60.0); // Total time in seconds
+const totalTime = ref(600.0); // Total time in seconds
 const currentTime = ref(0.0); // Current time in seconds
 const timerRunning = ref(false);
 const timer = ref(null);
@@ -414,13 +414,13 @@ function updateTime() {
               <br />
 
               <span
-                class="text-3xl"
+                class="text-2xl"
                 v-if="!isRevealed"
                 style="white-space: pre"
               >
                 {{ exercise.question }}
               </span>
-              <span class="text-3xl" v-else style="white-space: pre">
+              <span class="text-2xl" v-else style="white-space: pre">
                 {{ exercise.sentence_ar }}
               </span>
               <br />
@@ -435,12 +435,12 @@ function updateTime() {
           :class="isReverseOrder ? 'flex-row-reverse' : 'flex-row'"
           :key="exercise"
         >
-          <button class="btn text-3xl flex-grow" @click="handleAnswer(true)">
+          <button class="btn text-2xl flex-grow" @click="handleAnswer(true)">
             {{ exercise.correct_answer }}
           </button>
           <!-- also allow the user to keypress left and right -->
           <!-- however, we have to dynamically check whether left is the correct or the wrong answer, since it is randomly shuffled -->
-          <button class="btn text-3xl flex-grow" @click="handleAnswer(false)">
+          <button class="btn text-2xl flex-grow" @click="handleAnswer(false)">
             {{ exercise.wrong_answer }}
           </button>
         </div>
