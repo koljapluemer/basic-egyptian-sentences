@@ -230,6 +230,7 @@ function setGameMode(mode) {
     highscores.value.push({
       score: score.value,
       date: new Date().toISOString(),
+      timeframe: selectedTimeValue.value,
     });
     localStorage.setItem("highscores", JSON.stringify(highscores.value));
     setGameMode("undetermined");
@@ -334,6 +335,7 @@ function updateTime() {
             <span class="font-bold">
               {{ highscore.score }}
             </span>
+            <span>({{ highscore.timeframe }}) </span>
             <span>
               <!-- format as 09. Sept 2023, 22:34 -->
               {{
