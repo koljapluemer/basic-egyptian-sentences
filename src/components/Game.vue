@@ -6,9 +6,6 @@ const toaster = createToaster({
   position: "top-right",
 });
 
-const selectedTimeValue = ref(600);
-const timeOptions = [60, 300, 900];
-
 const exercise = ref(null);
 const lastExercise = ref(null);
 const exercisesDoneThisSession = ref(0);
@@ -200,7 +197,7 @@ function setGameMode(mode) {
     score.value = 0;
     // reset timer stuff (second may be not necessary)
     currentTime.value = 0;
-    totalTime.value = selectedTimeValue.value;
+    totalTime.value = 60;
     streak.value = 0;
     incorrectAnswerCounter.value = 0;
     console.log("reset incorrectAnswerCounter");
@@ -229,7 +226,6 @@ function setGameMode(mode) {
     highscores.value.push({
       score: score.value,
       date: new Date().toISOString(),
-      timeframe: selectedTimeValue.value,
     });
     localStorage.setItem("highscores", JSON.stringify(highscores.value));
     setGameMode("undetermined");
@@ -266,7 +262,7 @@ onMounted(() => {
   });
 });
 
-const totalTime = ref(selectedTimeValue.value);
+const totalTime = ref(60);
 const currentTime = ref(0.0); // Current time in seconds
 const timerRunning = ref(false);
 const timer = ref(null);
@@ -299,11 +295,6 @@ function updateTime() {
         <h2 class="card-title">
           Practice your survival Arabic and get ready for Egypt.
         </h2>
-        <select class="select" v-model="selectedTimeValue">
-          <option v-for="option in timeOptions" :key="option" :value="option">
-            {{ option }} seconds
-          </option>
-        </select>
         <button
           class="btn btn-primary flex-grow flex flex-col btn-primary"
           @click="setGameMode('go')"
@@ -334,7 +325,6 @@ function updateTime() {
             <span class="font-bold">
               {{ highscore.score }}
             </span>
-            <span>({{ highscore.timeframe }}) </span>
             <span>
               <!-- format as 09. Sept 2023, 22:34 -->
               {{
