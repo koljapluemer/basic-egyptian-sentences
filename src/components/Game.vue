@@ -41,7 +41,6 @@ if (localStorage.getItem("uid")) {
 // EXERCISES IMPORTER FROM BACKEND
 let exercises = [];
 import data from "@/clozes_phrases_filtered.json";
-// import phrases_data from "@/clozes_phrases.json";
 
 for (const exercise of data["exercises"]) {
   exercise.sr = {
