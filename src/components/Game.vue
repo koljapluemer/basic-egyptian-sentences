@@ -15,6 +15,7 @@ const gameMode = ref<"undetermined" | "go" | "game-ended">("undetermined")
 const isRevealed = ref(false)
 const lastAnswerWasCorrect = ref(false)
 const streak = ref(0)
+const correctAnswerCount = ref(0)
 const incorrectAnswerCounter = ref(0)
 const score = ref(0)
 const lastScore = ref<number | null>(null)
@@ -179,8 +180,12 @@ function handleAnswer(isCorrect: boolean) {
 
   if (isCorrect) {
     streak.value++
-    currentTime.value -= 5
-    toaster.success(`+5 seconds`)
+    correctAnswerCount.value++
+    const timeBonus = Math.max(0, 5 - Math.floor((correctAnswerCount.value - 1) / 10))
+    if (timeBonus > 0) {
+      currentTime.value -= timeBonus
+      toaster.success(`+${timeBonus} seconds`)
+    }
     const pointsToAdd = 10 + streak.value * 2
     score.value += pointsToAdd
     toaster.success(`+${pointsToAdd}`)
@@ -203,6 +208,7 @@ function setGameMode(mode: "undetermined" | "go" | "game-ended") {
     currentTime.value = 0
     totalTime.value = 60
     streak.value = 0
+    correctAnswerCount.value = 0
     incorrectAnswerCounter.value = 0
     startTimer()
     getNextExercise()
