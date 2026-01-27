@@ -76,8 +76,11 @@ function getUsableParts(sentence: Sentence): string[] {
   return sentence.arz.split(/\s+/).filter((word) => wordSet.value.has(word))
 }
 
-function stripDiacritics(value: string): string {
-  return value.replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06DC\u06DF-\u06E8\u06EA-\u06ED]/g, "")
+function normalizeForCompare(value: string): string {
+  return value
+    .replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06DC\u06DF-\u06E8\u06EA-\u06ED]/g, "")
+    .replace(/[\p{P}]/gu, "")
+    .trim()
 }
 
 // Generate exercise
@@ -94,10 +97,12 @@ function generateExercise() {
 
   // Find wrong answer: pick from 3 closest words by Levenshtein,
   // but exclude options that only differ by diacritics.
-  const basePart = stripDiacritics(currentPart.value)
+  const basePart = normalizeForCompare(currentPart.value)
   const closest = findClosestWords(currentPart.value, words.value, 3)
-  const filtered = closest.filter((word) => stripDiacritics(word) !== basePart)
-  const pool = filtered.length ? filtered : words.value.filter((word) => stripDiacritics(word) !== basePart)
+  const filtered = closest.filter((word) => normalizeForCompare(word) !== basePart)
+  const pool = filtered.length
+    ? filtered
+    : words.value.filter((word) => normalizeForCompare(word) !== basePart)
   wrongAnswer.value = pool[Math.floor(Math.random() * pool.length)] || words.value[0]
 }
 
@@ -161,6 +166,8 @@ function moveToNextExercise() {
 }
 
 function handleAnswer(isCorrect: boolean) {
+  if (gameMode.value !== "go" || isRevealed.value) return
+
   timerRunning.value = false
   isRevealed.value = true
   lastAnswerWasCorrect.value = isCorrect
@@ -202,6 +209,10 @@ function setGameMode(mode: "undetermined" | "go" | "game-ended") {
   } else if (mode === "game-ended") {
     lastScore.value = score.value
 
+    const bestScore = highscores.value.length
+      ? Math.max(...highscores.value.map((entry) => entry.score))
+      : null
+
     // Check for top 10 entry
     if (highscores.value.length < 10) {
       toaster.success("New Top 10 Entry!")
@@ -210,7 +221,7 @@ function setGameMode(mode: "undetermined" | "go" | "game-ended") {
     }
 
     // Check for personal best
-    if (highscores.value.length === 0 || score.value > highscores.value[0].score) {
+    if (bestScore === null || score.value > bestScore) {
       toaster.success("New Personal Best!")
     }
 
@@ -335,56 +346,36 @@ onMounted(async () => {
       </div>
     </div>
 
-    <div class="glass border border-base-200/60 rounded-2xl shadow grid gap-6 p-6" v-if="currentSentence">
+    <div class="glass border border-base-200/60 rounded-2xl shadow grid gap-6 p-6 w-full" v-if="currentSentence">
       <IndexCard :rows="cardRows" />
 
-      <div
-        class="flex gap-4"
-        v-if="!isRevealed"
-        :class="isReverseOrder ? 'flex-row-reverse' : 'flex-row'"
-      >
+      <div class="flex gap-4" v-if="!isRevealed" :class="isReverseOrder ? 'flex-row-reverse' : 'flex-row'">
         <div class="flex-1 grid gap-2">
-          <button
-            class="btn btn-lg w-full text-xl"
-            dir="rtl"
-            @click="handleAnswer(true)"
-          >
+          <button class="btn btn-lg w-full text-xl" dir="rtl" @click="handleAnswer(true)">
             {{ currentPart }}
           </button>
           <div class="flex justify-center">
-            <kbd
-              class="kbd kbd-sm glass bg-base-100/70 border border-base-200/60 inline-flex items-center gap-1"
-              v-if="!isReverseOrder"
-            >
+            <kbd class="kbd kbd-sm glass bg-base-100/70 border border-base-200/60 inline-flex items-center gap-1"
+              v-if="!isReverseOrder">
               <ArrowLeft class="w-3 h-3" />
             </kbd>
-            <kbd
-              class="kbd kbd-sm glass bg-base-100/70 border border-base-200/60 inline-flex items-center gap-1"
-              v-else
-            >
+            <kbd class="kbd kbd-sm glass bg-base-100/70 border border-base-200/60 inline-flex items-center gap-1"
+              v-else>
               <ArrowRight class="w-3 h-3" />
             </kbd>
           </div>
         </div>
         <div class="flex-1 grid gap-2">
-          <button
-            class="btn btn-lg w-full text-xl"
-            dir="rtl"
-            @click="handleAnswer(false)"
-          >
+          <button class="btn btn-lg w-full text-xl" dir="rtl" @click="handleAnswer(false)">
             {{ wrongAnswer }}
           </button>
           <div class="flex justify-center">
-            <kbd
-              class="kbd kbd-sm glass bg-base-100/70 border border-base-200/60 inline-flex items-center gap-1"
-              v-if="isReverseOrder"
-            >
+            <kbd class="kbd kbd-sm glass bg-base-100/70 border border-base-200/60 inline-flex items-center gap-1"
+              v-if="isReverseOrder">
               <ArrowLeft class="w-3 h-3" />
             </kbd>
-            <kbd
-              class="kbd kbd-sm glass bg-base-100/70 border border-base-200/60 inline-flex items-center gap-1"
-              v-else
-            >
+            <kbd class="kbd kbd-sm glass bg-base-100/70 border border-base-200/60 inline-flex items-center gap-1"
+              v-else>
               <ArrowRight class="w-3 h-3" />
             </kbd>
           </div>
@@ -392,7 +383,8 @@ onMounted(async () => {
       </div>
 
       <div v-else class="grid gap-2">
-        <button class="btn btn-lg w-full bg-base-100 text-base-content border border-base-200 fill-button" @click="getNextExercise">
+        <button class="btn btn-lg w-full bg-base-100 text-base-content border border-base-200 fill-button"
+          @click="getNextExercise">
           Continue
         </button>
         <div class="flex justify-center">
@@ -409,7 +401,7 @@ onMounted(async () => {
           href="https://eu.lisaanmasry.org/online/example.php">
           lisaanmasry.org
           <ExternalLink class="w-3 h-3" />
-        </a>
+        </a>. This material is Copyright © 2007-2020 Mike Green; this is non-commercial use as by the license.
       </p>
     </div>
   </template>
