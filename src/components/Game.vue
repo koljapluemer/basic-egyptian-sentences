@@ -76,6 +76,10 @@ function getUsableParts(sentence: Sentence): string[] {
   return sentence.arz.split(/\s+/).filter((word) => wordSet.value.has(word))
 }
 
+function stripDiacritics(value: string): string {
+  return value.replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06DC\u06DF-\u06E8\u06EA-\u06ED]/g, "")
+}
+
 // Generate exercise
 function generateExercise() {
   if (sentences.value.length === 0) return
@@ -88,9 +92,13 @@ function generateExercise() {
   const usableParts = getUsableParts(currentSentence.value)
   currentPart.value = usableParts[Math.floor(Math.random() * usableParts.length)]
 
-  // Find wrong answer: pick from 3 closest words by Levenshtein
+  // Find wrong answer: pick from 3 closest words by Levenshtein,
+  // but exclude options that only differ by diacritics.
+  const basePart = stripDiacritics(currentPart.value)
   const closest = findClosestWords(currentPart.value, words.value, 3)
-  wrongAnswer.value = closest[Math.floor(Math.random() * closest.length)] || words.value[0]
+  const filtered = closest.filter((word) => stripDiacritics(word) !== basePart)
+  const pool = filtered.length ? filtered : words.value.filter((word) => stripDiacritics(word) !== basePart)
+  wrongAnswer.value = pool[Math.floor(Math.random() * pool.length)] || words.value[0]
 }
 
 // Build card rows for display
