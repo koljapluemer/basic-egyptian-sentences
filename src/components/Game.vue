@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue"
 import { createToaster } from "@meforma/vue-toaster"
+import { Play, Trophy, Timer, ArrowLeft, ArrowRight, CornerDownLeft, ExternalLink } from "lucide-vue-next"
 import IndexCard from "./IndexCard.vue"
 import type { IndexCardRow, Sentence } from "./types"
 import { findClosestWords } from "@/utils/stringDistance"
@@ -42,9 +43,7 @@ if (localStorage.getItem("highscores")) {
 
 // Computed
 const remainingTime = computed(() => totalTime.value - currentTime.value)
-const progressStyle = computed(() => ({
-  width: `${(1 - currentTime.value / totalTime.value) * 100}%`,
-}))
+const progressPercent = computed(() => (1 - currentTime.value / totalTime.value) * 100)
 
 // Load data from public folder
 async function loadData() {
@@ -102,7 +101,7 @@ const cardRows = computed<IndexCardRow[]>(() => {
     // Front: Arabic with placeholder, divider, English
     const maskedArabic = currentSentence.value.arz.replace(
       currentPart.value,
-      '<span class="inline-block bg-primary/30 rounded px-2 mx-1 min-w-[3rem]">&nbsp;&nbsp;&nbsp;</span>'
+      '<span class="inline-block bg-base-200/70 border border-base-300/60 rounded px-2 mx-1 min-w-[3rem]">&nbsp;&nbsp;&nbsp;</span>'
     )
     const translation = currentSentence.value.translations[0]?.replace("eng:", "") || ""
 
@@ -115,7 +114,7 @@ const cardRows = computed<IndexCardRow[]>(() => {
     // Revealed: Full Arabic with highlight, divider, transliteration, English
     const highlightedArabic = currentSentence.value.arz.replace(
       currentPart.value,
-      `<span class="bg-primary/30 rounded px-1">${currentPart.value}</span>`
+      `<span class="bg-base-200/70 border border-base-300/60 rounded px-1">${currentPart.value}</span>`
     )
     const translation = currentSentence.value.translations[0]?.replace("eng:", "") || ""
 
@@ -260,136 +259,165 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div v-if="gameMode === 'undetermined'">
-    <h1 class="font-bold text-5xl m-4">Basic Egyptian Sentences Game</h1>
-    <div class="card glass m-2">
-      <div class="card-body flex gap-2 flex-wrap justify-center">
-        <h2 class="card-title">
-          Practice your survival Arabic and get ready for Egypt.
-        </h2>
-        <button
-          class="btn btn-primary flex-grow flex flex-col"
-          @click="setGameMode('go')"
-        >
+  <!-- Menu Screen -->
+  <template v-if="gameMode === 'undetermined'">
+    <div class="glass border border-base-200/60 rounded-2xl shadow p-4 w-full">
+      <h1 class="font-bold text-4xl text-center text-base-content ">
+        Basic Egyptian Sentences
+      </h1>
+    </div>
+
+    <div class="glass border border-base-200/60 rounded-2xl shadow flex flex-col gap-4 p-4 items-center w-full">
+      <p class="text-center text-base-content/90">
+        Practice your survival Arabic and get ready for Egypt.
+      </p>
+      <div class="flex flex-col gap-2 items-center">
+        <button class="btn btn-lg w-full gap-2" @click="setGameMode('go')">
+          <Play class="w-5 h-5" />
           Start Game
         </button>
+        <kbd class="kbd kbd-sm inline-flex items-center gap-1 glass">
+          <CornerDownLeft class="w-3 h-3" />Enter
+        </kbd>
       </div>
     </div>
 
-    <div class="card glass m-2" v-if="lastScore">
-      <div class="card-body">
-        <h2 class="card-title">You scored: {{ lastScore }} points.</h2>
+    <div class="glass border border-base-200/60 rounded-2xl shadow  p-4 w-full" v-if="lastScore">
+      <p class="text-center text-lg">
+        You scored <span class="font-bold">{{ lastScore }}</span> points
+      </p>
+    </div>
+
+    <div class="glass border border-base-200/60 rounded-2xl shadow  p-4 w-full grid gap-3 p-6"
+      v-if="sortedHighscores().length">
+      <h2 class="font-semibold flex items-center gap-2">
+        <Trophy class="w-5 h-5" />
+        Highscore
+      </h2>
+      <ol class="grid gap-1">
+        <li v-for="(highscore, index) in sortedHighscores().slice(0, 10)" :key="index" class="flex justify-between">
+          <span class="font-medium">{{ highscore.score }}</span>
+          <span class="text-base-content/90">
+            {{
+              new Date(highscore.date).toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              })
+            }}
+          </span>
+        </li>
+      </ol>
+    </div>
+  </template>
+
+  <!-- Game Screen -->
+  <template v-else-if="gameMode === 'go'">
+    <div class="glass border border-base-200/60 rounded-2xl shadow grid gap-2 p-4 w-full">
+      <div class="flex justify-between items-center">
+        <span class="font-bold text-lg">{{ score }}</span>
+        <span class="flex items-center gap-1 text-base-content/90">
+          <Timer class="w-4 h-4" />
+          {{ Math.round(remainingTime) }}s
+        </span>
+      </div>
+      <div class="w-full glass rounded-full h-2 overflow-hidden">
+        <div class="h-full bg-base-content/60 transition-all duration-1000 ease-linear rounded-full"
+          :style="{ width: `${progressPercent}%` }" />
       </div>
     </div>
 
-    <div class="card glass m-2">
-      <div class="card-body">
-        <h2 class="card-title">Personal Highscores</h2>
-        <ol class="list-decimal">
-          <li
-            v-for="(highscore, index) in sortedHighscores().slice(0, 10)"
-            :key="index"
-            class="flex gap-4 w-full justify-between"
-          >
-            <span class="font-bold">{{ highscore.score }}</span>
-            <span>
-              {{
-                new Date(highscore.date).toLocaleDateString("en-GB", {
-                  day: "2-digit",
-                  month: "short",
-                  year: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })
-              }}
-            </span>
-          </li>
-        </ol>
-      </div>
-    </div>
-  </div>
+    <div class="glass border border-base-200/60 rounded-2xl shadow grid gap-6 p-6" v-if="currentSentence">
+      <IndexCard :rows="cardRows" />
 
-  <div v-else-if="gameMode === 'go'">
-    <div class="card m-2 glass">
-      <div class="card-body">
-        <h2 class="card-title">Score: {{ score }}</h2>
-        <div class="countdown-timer">
-          <div class="progress-bar">
-            <div class="progress" :style="progressStyle"></div>
-          </div>
-          <p>Time Remaining: {{ Math.round(remainingTime) }}s</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="card m-2 glass" v-if="currentSentence" style="min-height: 390px">
-      <div class="card-body">
-        <IndexCard :rows="cardRows" />
-
-        <div
-          class="card-actions gap-2 mt-6 pt-2 flex"
-          v-if="!isRevealed"
-          :class="isReverseOrder ? 'flex-row-reverse' : 'flex-row'"
-        >
+      <div
+        class="flex gap-4"
+        v-if="!isRevealed"
+        :class="isReverseOrder ? 'flex-row-reverse' : 'flex-row'"
+      >
+        <div class="flex-1 grid gap-2">
           <button
-            class="btn text-2xl flex-grow"
+            class="btn btn-lg w-full text-xl"
             dir="rtl"
             @click="handleAnswer(true)"
           >
             {{ currentPart }}
           </button>
+          <div class="flex justify-center">
+            <kbd
+              class="kbd kbd-sm glass bg-base-100/70 border border-base-200/60 inline-flex items-center gap-1"
+              v-if="!isReverseOrder"
+            >
+              <ArrowLeft class="w-3 h-3" />
+            </kbd>
+            <kbd
+              class="kbd kbd-sm glass bg-base-100/70 border border-base-200/60 inline-flex items-center gap-1"
+              v-else
+            >
+              <ArrowRight class="w-3 h-3" />
+            </kbd>
+          </div>
+        </div>
+        <div class="flex-1 grid gap-2">
           <button
-            class="btn text-2xl flex-grow"
+            class="btn btn-lg w-full text-xl"
             dir="rtl"
             @click="handleAnswer(false)"
           >
             {{ wrongAnswer }}
           </button>
-        </div>
-        <div class="card-actions gap-2 mt-6 pt-2 flex" v-else>
-          <button class="btn flex-grow fill-button" @click="getNextExercise">
-            Show Next
-          </button>
+          <div class="flex justify-center">
+            <kbd
+              class="kbd kbd-sm glass bg-base-100/70 border border-base-200/60 inline-flex items-center gap-1"
+              v-if="isReverseOrder"
+            >
+              <ArrowLeft class="w-3 h-3" />
+            </kbd>
+            <kbd
+              class="kbd kbd-sm glass bg-base-100/70 border border-base-200/60 inline-flex items-center gap-1"
+              v-else
+            >
+              <ArrowRight class="w-3 h-3" />
+            </kbd>
+          </div>
         </div>
       </div>
-      <p class="p-4">
-        The sentences are sourced from
-        <a target="_blank" class="underline" href="https://eu.lisaanmasry.org/online/example.php">lisaanmasry.org</a>.
-        This material is Copyright © 2007-2020 Mike Green.
+
+      <div v-else class="grid gap-2">
+        <button class="btn btn-lg w-full bg-base-100 text-base-content border border-base-200 fill-button" @click="getNextExercise">
+          Continue
+        </button>
+        <div class="flex justify-center">
+          <kbd class="kbd kbd-sm glass bg-base-100/70 border border-base-200/60 inline-flex items-center gap-1">
+            <CornerDownLeft class="w-3 h-3" />
+            Enter
+          </kbd>
+        </div>
+      </div>
+
+      <p class="text-center text-base-content/90">
+        Sentences from
+        <a target="_blank" class="link inline-flex items-center gap-1"
+          href="https://eu.lisaanmasry.org/online/example.php">
+          lisaanmasry.org
+          <ExternalLink class="w-3 h-3" />
+        </a>
       </p>
     </div>
-  </div>
+  </template>
 </template>
 
 <style scoped>
 .fill-button {
-  background: linear-gradient(to right, #641ae6 50%, transparent 0);
+  background: linear-gradient(to right, rgba(255, 255, 255, 0.3) 50%, transparent 0);
   background-size: 200% 100%;
   background-position: right;
-  animation: makeItfadeIn 5s 0s forwards linear;
+  animation: fillProgress 5s forwards linear;
 }
 
-@keyframes makeItfadeIn {
+@keyframes fillProgress {
   100% {
     background-position: left;
   }
-}
-
-.countdown-timer {
-  text-align: center;
-}
-
-.progress-bar {
-  width: 100%;
-  background-color: #ccc;
-  height: 20px;
-  position: relative;
-  border-radius: 12px;
-}
-
-.progress-bar div {
-  height: 100%;
-  background-color: #4caf50;
-  transition: width 1s linear;
 }
 </style>
