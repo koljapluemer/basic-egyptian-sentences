@@ -1,7 +1,6 @@
 # Basic Egyptian Sentences Game
 
-![Project Image](/doc/img/project.png)
-
+![Screenshots of the game](screenshot.png)
 
 
 Practice essential Egyptian Arabic phrases. 
@@ -30,15 +29,3 @@ If you have any questions, problems or bugs to report, kindly open an issue. Che
 
 - Background image by [Omar Elsharawy](https://unsplash.com/@esh3rwy?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash")
 - Tech Stack: `Vue`, `Tailwind`, `DaisyUI`.
-- Practice sentences are inspired by and partly taken from various websites, paperbacks, friend's recommendations, videos, ChatGPT and googleTranslate
-    - [this repo](https://github.com/koljapluemer/basic-arabic-sentences-backend) deals with the treatment of the underlying data
-  
-
-## Gallery
-
-
-
-![Screenshot of Basic-Egyptian-Sentences](/doc/img/gallery/s1.png)
-
-
-![Screenshot of Basic-Egyptian-Sentences](/doc/img/gallery/s2.png)
