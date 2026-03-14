@@ -1,6 +1,5 @@
 <script setup>
 import Game from "./components/Game.vue";
-import { Mail, ExternalLink } from "lucide-vue-next";
 </script>
 
 <template>
@@ -11,16 +10,17 @@ import { Mail, ExternalLink } from "lucide-vue-next";
   <footer class="glass border border-base-200/60 rounded-2xl shadow p-4 w-full">
     <p>
       Made by
-      <a class="link" href="https://koljapluemer.com/">Kolja Sam Pluemer</a>.
-      <a href="mailto:feedback@koljapluemer.com" class="link inline-flex items-center gap-1">
-        Send feedback here
-        <Mail class="w-3 h-3" />
-      </a>.
+      <a class="link" href="https://koljasam.com/" target="_blank">Kolja Sam</a>.
     </p>
 
     <p class="text-base-content/90">
       No personal data leaves your device. Cookies store progress locally.
     </p>
+
+    <p>If this app taught you something, you may want to <a href="https://ko-fi.com/S6S81CWUVD" target="_blank"
+        rel="noopener" class="link">
+        buy me a coffee
+      </a>.</p>
   </footer>
 </template>
 

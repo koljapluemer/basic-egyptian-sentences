@@ -2,13 +2,9 @@
 
 ![Screenshots of the game](screenshot.png)
 
+**[Play Online](https://arz.koljasam.com/)**
 
 Practice essential Egyptian Arabic phrases. 
-
-## User Stories
-
-- [x] As a learner, I want to memorize relevant phrases to get by in Egypt in an efficient and fun way.
-- [x] As the programmer, I want to learn more about how sentence learning works best
 
 ## About
 
